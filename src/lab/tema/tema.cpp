@@ -467,10 +467,6 @@ void Tema::Update(float deltaTimeSeconds)
             RenderMesh(meshes["sphere"], shaders["Simple"], model);
         }
     */
-   
-
-
-    
 }
 
 
