@@ -55,6 +55,19 @@ namespace lab
         float limbRotationSpeed;
         bool isMoving;
         glm::vec3 cameraOffset;
+        float curveFactor;
+        int groundScale;
+        int lightpost_count;
+        float lightpost_distance;
+        glm::vec3 *lightpost_positions;
+        int lightposts_per_row;
+        float map_border;
+
+
+        glm::vec3 lightpost_color;
+        glm::vec3 ground_color;
+        glm::vec3 player_color;
+
         // =====================================================================================================================
 
 

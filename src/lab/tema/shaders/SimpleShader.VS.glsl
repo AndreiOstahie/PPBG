@@ -10,16 +10,25 @@ uniform mat4 Model;
 uniform mat4 View;
 uniform mat4 Projection;
 
+uniform vec3 playerPos;
+uniform float curveFactor;
+
 // Output value to fragment shader
 out vec3 world_position;
 out vec3 world_normal;
 
 void main()
 {
-    // TODO(student): Compute world space vertex position and normal,
-    // and send them to the fragment shader
     world_position = (Model * vec4(v_position, 1)).xyz;
     world_normal = normalize( mat3(Model) * v_normal );
 
+    // Position after curvature effect
+    vec3 new_position = v_position;
+    new_position.y = pow(length(normalize(playerPos - world_position)), 2) * curveFactor;
+
+
+
+
     gl_Position = Projection * View * Model * vec4(v_position, 1.0);
+    
 }

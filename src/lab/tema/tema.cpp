@@ -4,6 +4,8 @@
 #include <string>
 #include <iostream>
 
+#include "glm/gtx/string_cast.hpp"
+
 using namespace std;
 using namespace lab;
 
@@ -148,9 +150,13 @@ void Tema::Init()
 
 
     // Variables init
+    lightpost_color = glm::vec3(1, 0, 0);
+    ground_color = glm::vec3(0, 1, 0);
+    player_color = glm::vec3(0, 0, 1);
+
     playerRotY = 0.0f;
     playerPos = glm::vec3(0, 0, 0);
-    playerSpeed = 3.0f;
+    playerSpeed = 15.0f;
     limbRotation1 = 0.0f;
     limbRotation2 = 0.0f;
     limbMaxRotation = 45.0f;
@@ -160,9 +166,25 @@ void Tema::Init()
     limbRotationSpeed = 200.0f;
     isMoving = false;
     cameraOffset = glm::vec3(0, 10, 10);
+    curveFactor = 0.02f;
 
+    groundScale = 50.0f;
+    lightposts_per_row = 5;
+    map_border = 5.0f;
 
-    
+    // Determine light posts spawn positions
+    lightpost_distance = ((groundScale - map_border) - (-groundScale + map_border)) / (lightposts_per_row - 1);
+    lightpost_positions = (glm::vec3 *)malloc(lightposts_per_row * lightposts_per_row * sizeof(glm::vec3));
+    int index = 0;
+    for (int i = 0; i < lightposts_per_row; i++)
+    {
+        float startPosX = -groundScale + map_border;
+        float startPosY = -groundScale + map_border;
+        for (int j = 0; j < lightposts_per_row; j++)
+        {
+            lightpost_positions[index++] = glm::vec3(startPosX + j * lightpost_distance, 0, startPosY + i * lightpost_distance);
+        }
+    }
 }
 
 
@@ -179,9 +201,17 @@ void Tema::FrameStart()
 
 void Tema::Update(float deltaTimeSeconds)
 {
+    //GetSceneCamera()->SetPosition(playerPos + cameraOffset);
+    //GetSceneCamera()->SetRotation(glm::angleAxis(RADIANS(-30.0f), glm::vec3(1, 0, 0)));
+
     // Set camera position to follow player
-    GetSceneCamera()->SetPosition(playerPos + cameraOffset);
-    GetSceneCamera()->SetRotation(glm::angleAxis(RADIANS(-30.0f), glm::vec3(1, 0, 0)));
+    auto camera = GetSceneCamera();
+    camera->SetPositionAndRotation(
+        playerPos + cameraOffset,
+        glm::quatLookAt(-glm::normalize(cameraOffset), glm::vec3(0, 1, 0))
+    );
+
+
 
     angle += glm::radians(6.0f) * deltaTimeSeconds;
 
@@ -233,9 +263,9 @@ void Tema::Update(float deltaTimeSeconds)
     // Render ground
     {
         glm::mat4 model = glm::mat4(1);
-        model = glm::translate(model, glm::vec3(0, 0.01f, 0));
-        model = glm::scale(model, glm::vec3(25.0f));
-        RenderSimpleMesh(meshes["ground"], shaders["SimpleShader"], model, glm::vec3(1));
+        model = glm::translate(model, glm::vec3(0, 0.1f, 0));
+        model = glm::scale(model, glm::vec3(groundScale));
+        RenderSimpleMesh(meshes["ground"], shaders["SimpleShader"], model, ground_color);
     }
 
     // Render Player Model
@@ -248,7 +278,7 @@ void Tema::Update(float deltaTimeSeconds)
             model = glm::translate(model, glm::vec3(0, 1.55f, 0)); // translate limb relative to player's body
             
             model = glm::scale(model, glm::vec3(0.5f, 1.0f, 0.25f));
-            RenderSimpleMesh(meshes["cube"], shaders["SimpleShader"], model, glm::vec3(1));
+            RenderSimpleMesh(meshes["cube"], shaders["SimpleShader"], model, player_color);
         }
 
         // Head
@@ -259,7 +289,7 @@ void Tema::Update(float deltaTimeSeconds)
             model = glm::translate(model, glm::vec3(0, 2.2f, 0)); // translate limb relative to player's body
             
             model = glm::scale(model, glm::vec3(0.2f, 0.2f, 0.2f));
-            RenderSimpleMesh(meshes["cube"], shaders["SimpleShader"], model, glm::vec3(1));
+            RenderSimpleMesh(meshes["cube"], shaders["SimpleShader"], model, player_color);
         }
 
         // Right Arm
@@ -271,7 +301,7 @@ void Tema::Update(float deltaTimeSeconds)
             model = glm::rotate(model, RADIANS(limbRotation1), glm::vec3(1, 0, 0)); // rotate limb to desired angle
             model = glm::scale(model, glm::vec3(0.2f, 1.0f, 0.2f)); // scale limb to desired ratio
             model = glm::translate(model, glm::vec3(0, -0.5f, 0)); // translate limb so rotation pivot is correct
-            RenderSimpleMesh(meshes["cube"], shaders["SimpleShader"], model, glm::vec3(1));
+            RenderSimpleMesh(meshes["cube"], shaders["SimpleShader"], model, player_color);
         }
         // Left Arm
         {
@@ -282,7 +312,7 @@ void Tema::Update(float deltaTimeSeconds)
             model = glm::rotate(model, RADIANS(limbRotation2), glm::vec3(1, 0, 0)); // rotate limb to desired angle
             model = glm::scale(model, glm::vec3(0.2f, 1.0f, 0.2f)); // scale limb to desired ratio
             model = glm::translate(model, glm::vec3(0, -0.5f, 0)); // translate limb so rotation pivot is correct
-            RenderSimpleMesh(meshes["cube"], shaders["SimpleShader"], model, glm::vec3(1));
+            RenderSimpleMesh(meshes["cube"], shaders["SimpleShader"], model, player_color);
         }
 
         // Right Leg
@@ -294,7 +324,7 @@ void Tema::Update(float deltaTimeSeconds)
             model = glm::rotate(model, RADIANS(limbRotation2), glm::vec3(1, 0, 0)); // rotate limb to desired angle
             model = glm::scale(model, glm::vec3(0.2f, 1.0f, 0.2f)); // scale limb to desired ratio
             model = glm::translate(model, glm::vec3(0, -0.5f, 0)); // translate limb so rotation pivot is correct
-            RenderSimpleMesh(meshes["cube"], shaders["SimpleShader"], model, glm::vec3(1));
+            RenderSimpleMesh(meshes["cube"], shaders["SimpleShader"], model, player_color);
         }
         // Left Leg
         {
@@ -305,7 +335,7 @@ void Tema::Update(float deltaTimeSeconds)
             model = glm::rotate(model, RADIANS(limbRotation1), glm::vec3(1, 0, 0)); // rotate limb to desired angle
             model = glm::scale(model, glm::vec3(0.2f, 1.0f, 0.2f)); // scale limb to desired ratio
             model = glm::translate(model, glm::vec3(0, -0.5f, 0)); // translate limb so rotation pivot is correct
-            RenderSimpleMesh(meshes["cube"], shaders["SimpleShader"], model, glm::vec3(1));
+            RenderSimpleMesh(meshes["cube"], shaders["SimpleShader"], model, player_color);
         }
         
     }
@@ -328,6 +358,26 @@ void Tema::Update(float deltaTimeSeconds)
         RenderMesh(meshes["sphere"], shaders["Simple"], model);
     }
 
+
+    // Render light posts
+    for (int i = 0; i < lightposts_per_row * lightposts_per_row; i++)
+    {
+        glm::mat4 model = glm::mat4(1);
+        model = glm::translate(model, lightpost_positions[i]);
+        model = glm::rotate(model, RADIANS(30), glm::vec3(0, 1, 0));
+        model = glm::translate(model, glm::vec3(0, 5.0f / 2, 0));
+        model = glm::scale(model, glm::vec3(0.35f, 5.0f, 0.35f));
+        RenderSimpleMesh(meshes["cube"], shaders["SimpleShader"], model, lightpost_color);
+    }
+    for (int i = 0; i < lightposts_per_row * lightposts_per_row; i++)
+    {
+        glm::mat4 model = glm::mat4(1);
+        model = glm::translate(model, lightpost_positions[i]);
+        model = glm::rotate(model, RADIANS(30), glm::vec3(0, 1, 0));
+        model = glm::translate(model, glm::vec3(0, 5.0f, 0));
+        model = glm::scale(model, glm::vec3(0.35f, 0.35f, 3.0f));
+        RenderSimpleMesh(meshes["cube"], shaders["SimpleShader"], model, lightpost_color);
+    }
 }
 
 
@@ -373,6 +423,13 @@ void Tema::RenderSimpleMesh(Mesh* mesh, Shader* shader, const glm::mat4& model, 
     // TODO(student): Set eye position (camera position) uniform
     int eye_position_location = glGetUniformLocation(shader->program, "eye_position");
     glUniform3fv(eye_position_location, 1, glm::value_ptr(eye_position));
+
+
+    int playerPos_location = glGetUniformLocation(shader->program, "playerPos");
+    glUniform3fv(playerPos_location, 1, glm::value_ptr(playerPos));
+
+    int curveFactor_location = glGetUniformLocation(shader->program, "curveFactor");
+    glUniform1f(curveFactor_location, curveFactor);
 
 
     glm::vec3 material_ka = object_color;
@@ -666,9 +723,6 @@ void Tema::OnInputUpdate(float deltaTime, int mods)
                 limbRotation1 = glm::mix(limbRotation1, 0.0f, deltaTime * resetSpeed);
                 limbRotation2 = glm::mix(limbRotation2, 0.0f, deltaTime * resetSpeed);
             }
-            
-            printf("limb rotation 1: %f\n", limbRotation1);
-            printf("limb rotation 2: %f\n", limbRotation2);
         }
         
     }
