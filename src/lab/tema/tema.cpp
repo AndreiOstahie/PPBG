@@ -1,4 +1,5 @@
 #include "lab/tema/tema.h"
+#include "lab/tema/enemy.h"
 
 #include <vector>
 #include <string>
@@ -177,6 +178,25 @@ void Tema::Init()
     groundScale = 50.0f;
     lightposts_per_row = 5;
     map_border = 5.0f;
+    glm::vec3 minBounds(-groundScale, 0.0f, -groundScale);
+    glm::vec3 maxBounds(groundScale, 5.0f, groundScale);
+
+    enemyCount = 50;
+    enemies = (Enemy *) malloc(enemyCount * sizeof(Enemy));
+
+    // Create enemies
+    for (int i = 0; i < enemyCount; i++)
+    {
+        float randomX = minBounds.x + static_cast<float>(rand()) / RAND_MAX * (maxBounds.x - minBounds.x);
+        float randomZ = minBounds.z + static_cast<float>(rand()) / RAND_MAX * (maxBounds.z - minBounds.z);
+
+        float r, g, b;
+        r = rand() % 100 / 100.0f;
+        g = rand() % 100 / 100.0f;
+        b = rand() % 100 / 100.0f;
+
+        enemies[i] = Enemy(glm::vec3(randomX, 0, randomZ), glm::vec3(r, g, b));
+    }
 
     // Determine light posts spawn positions
     lightpost_distance = ((groundScale - map_border) - (-groundScale + map_border)) / (lightposts_per_row - 1);
@@ -256,13 +276,6 @@ void Tema::Update(float deltaTimeSeconds)
         glm::quatLookAt(-glm::normalize(cameraOffset), glm::vec3(0, 1, 0))
     );
 
-  /*  for (int i = 0; i < spot_count; i++)
-    {
-        glm::mat4 rotation = glm::rotate(glm::mat4(1), glm::radians(50 * deltaTimeSeconds), glm::vec3(1, 0, 0));
-        spot_directions[i] = glm::mat3(rotation) * spot_directions[i];
-    }*/
-    
-
 
     // Update the rotation timer
     timeSinceLastRotation += deltaTimeSeconds;
@@ -300,16 +313,6 @@ void Tema::Update(float deltaTimeSeconds)
     }
 
 
-
-
-
-
-
-    
-    
-
-
-
     // Render ground
     {
         glm::mat4 model = glm::mat4(1);
@@ -326,7 +329,6 @@ void Tema::Update(float deltaTimeSeconds)
             model = glm::translate(model, playerPos); // translate limb to player's current pos
             model = glm::rotate(model, RADIANS(playerRotY), glm::vec3(0, 1, 0)); // player rotation
             model = glm::translate(model, glm::vec3(0, 1.55f, 0)); // translate limb relative to player's body
-            
             model = glm::scale(model, glm::vec3(0.5f, 1.0f, 0.25f));
             RenderSimpleMesh(meshes["cube"], shaders["SimpleShader"], model, player_color);
         }
@@ -337,7 +339,6 @@ void Tema::Update(float deltaTimeSeconds)
             model = glm::translate(model, playerPos); // translate limb to player's current pos
             model = glm::rotate(model, RADIANS(playerRotY), glm::vec3(0, 1, 0)); // player rotation
             model = glm::translate(model, glm::vec3(0, 2.2f, 0)); // translate limb relative to player's body
-            
             model = glm::scale(model, glm::vec3(0.2f, 0.2f, 0.2f));
             RenderSimpleMesh(meshes["cube"], shaders["SimpleShader"], model, player_color);
         }
@@ -438,9 +439,95 @@ void Tema::Update(float deltaTimeSeconds)
         RenderMesh(meshes["sphere"], shaders["Simple"], model);
     }
 
+    // Enemies
+    {
+        for (int i = 0; i < enemyCount; i++)
+        {
+            // Enemies follow player
+            enemies[i].Follow(playerPos, deltaTimeSeconds);
+            enemies[i].Animate(deltaTimeSeconds);
+
+
+            // Render enemies
+            {
+                // Body
+                {
+                    glm::mat4 model = glm::mat4(1);
+                    model = glm::translate(model, enemies[i].GetPosition()); // translate limb to enemy's current pos
+                    model = glm::rotate(model, RADIANS(enemies[i].GetRotation().y), glm::vec3(0, 1, 0)); // enemy rotation
+                    model = glm::translate(model, glm::vec3(0, 1.55f, 0)); // translate limb relative to enemy's body
+                    model = glm::scale(model, glm::vec3(0.5f, 1.0f, 0.25f));
+                    RenderSimpleMesh(meshes["cube"], shaders["SimpleShader"], model, enemies[i].GetColor());
+                }
+
+                // Head
+                {
+                    glm::mat4 model = glm::mat4(1);
+                    model = glm::translate(model, enemies[i].GetPosition()); // translate limb to enemy's current pos
+                    model = glm::rotate(model, RADIANS(enemies[i].GetRotation().y), glm::vec3(0, 1, 0)); // enemy rotation
+                    model = glm::translate(model, glm::vec3(0, 2.2f, 0)); // translate limb relative to enemy's body
+                    model = glm::scale(model, glm::vec3(0.2f, 0.2f, 0.2f));
+                    RenderSimpleMesh(meshes["cube"], shaders["SimpleShader"], model, enemies[i].GetColor());
+                }
+
+                // Right Arm
+                {
+                    glm::mat4 model = glm::mat4(1);
+                    model = glm::translate(model, enemies[i].GetPosition()); // translate limb to enemy's current pos
+                    model = glm::rotate(model, RADIANS(enemies[i].GetRotation().y), glm::vec3(0, 1, 0)); // enemy rotation
+                    model = glm::translate(model, glm::vec3(0.4f, 2.05f, 0)); // translate limb relative to enemy's body
+                    model = glm::rotate(model, RADIANS(enemies[i].GetLimbRotation1()), glm::vec3(1, 0, 0)); // rotate limb to desired angle
+                    model = glm::scale(model, glm::vec3(0.2f, 1.0f, 0.2f)); // scale limb to desired ratio
+                    model = glm::translate(model, glm::vec3(0, -0.5f, 0)); // translate limb so rotation pivot is correct
+                    RenderSimpleMesh(meshes["cube"], shaders["SimpleShader"], model, enemies[i].GetColor());
+                }
+                // Left Arm
+                {
+                    glm::mat4 model = glm::mat4(1);
+                    model = glm::translate(model, enemies[i].GetPosition()); // translate limb to enemy's current pos
+                    model = glm::rotate(model, RADIANS(enemies[i].GetRotation().y), glm::vec3(0, 1, 0)); // enemy rotation
+                    model = glm::translate(model, glm::vec3(-0.4f, 2.05f, 0)); // translate limb relative to enemy's body
+                    model = glm::rotate(model, RADIANS(enemies[i].GetLimbRotation2()), glm::vec3(1, 0, 0)); // rotate limb to desired angle
+                    model = glm::scale(model, glm::vec3(0.2f, 1.0f, 0.2f)); // scale limb to desired ratio
+                    model = glm::translate(model, glm::vec3(0, -0.5f, 0)); // translate limb so rotation pivot is correct
+                    RenderSimpleMesh(meshes["cube"], shaders["SimpleShader"], model, enemies[i].GetColor());
+                }
+
+                // Right Leg
+                {
+                    glm::mat4 model = glm::mat4(1);
+                    model = glm::translate(model, enemies[i].GetPosition()); // translate limb to enemy's current pos
+                    model = glm::rotate(model, RADIANS(enemies[i].GetRotation().y), glm::vec3(0, 1, 0)); // enemy rotation
+                    model = glm::translate(model, glm::vec3(0.15f, 1.0f, 0)); // translate limb relative to enemy's body
+                    model = glm::rotate(model, RADIANS(enemies[i].GetLimbRotation2()), glm::vec3(1, 0, 0)); // rotate limb to desired angle
+                    model = glm::scale(model, glm::vec3(0.2f, 1.0f, 0.2f)); // scale limb to desired ratio
+                    model = glm::translate(model, glm::vec3(0, -0.5f, 0)); // translate limb so rotation pivot is correct
+                    RenderSimpleMesh(meshes["cube"], shaders["SimpleShader"], model, enemies[i].GetColor());
+                }
+                // Left Leg
+                {
+                    glm::mat4 model = glm::mat4(1);
+                    model = glm::translate(model, enemies[i].GetPosition()); // translate limb to enemy's current pos
+                    model = glm::rotate(model, RADIANS(enemies[i].GetRotation().y), glm::vec3(0, 1, 0)); // enemy rotation
+                    model = glm::translate(model, glm::vec3(-0.15f, 1.0f, 0)); // translate limb relative to enemy's body
+                    model = glm::rotate(model, RADIANS(enemies[i].GetLimbRotation1()), glm::vec3(1, 0, 0)); // rotate limb to desired angle
+                    model = glm::scale(model, glm::vec3(0.2f, 1.0f, 0.2f)); // scale limb to desired ratio
+                    model = glm::translate(model, glm::vec3(0, -0.5f, 0)); // translate limb so rotation pivot is correct
+                    RenderSimpleMesh(meshes["cube"], shaders["SimpleShader"], model, enemies[i].GetColor());
+                }
+            }
+        }
+    }
+
 
     // Set up and render lights from lab 6
     /*
+    * for (int i = 0; i < spot_count; i++)
+    {
+        glm::mat4 rotation = glm::rotate(glm::mat4(1), glm::radians(50 * deltaTimeSeconds), glm::vec3(1, 0, 0));
+        spot_directions[i] = glm::mat3(rotation) * spot_directions[i];
+    }
+
          angle += glm::radians(6.0f) * deltaTimeSeconds;
         for (int i = 0; i < 9; i++) {
             glm::mat4 rotation = glm::rotate(glm::mat4(1.0), angle + i * glm::radians(360.0f) / 9, glm::vec3(0, 1, 0));

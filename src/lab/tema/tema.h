@@ -2,6 +2,7 @@
 
 #include "components/simple_scene.h"
 #include "components/transform.h"
+#include "lab/tema/enemy.h"
 
 
 namespace lab
@@ -83,6 +84,9 @@ namespace lab
         glm::vec3 lightpost_color;
         glm::vec3 ground_color;
         glm::vec3 player_color;
+
+        int enemyCount;
+        Enemy *enemies;
 
         
 
