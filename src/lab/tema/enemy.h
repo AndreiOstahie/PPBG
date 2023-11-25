@@ -12,6 +12,7 @@ namespace lab
          Enemy(glm::vec3 position, glm::vec3 color);
         ~Enemy();
 
+        // Getters
         glm::vec3 GetPosition();
         glm::vec3 GetRotation();
         glm::vec3 GetColor();
@@ -22,6 +23,9 @@ namespace lab
         int GetLimbDirection1();
         int GetLimbDirection2();
         float GetLimbRotationSpeed();
+
+        // Setters
+        void SetPosition(glm::vec3 newPos);
 
         void Follow(glm::vec3 target, float deltaTime);
         void Animate(float deltaTime);

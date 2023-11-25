@@ -181,6 +181,8 @@ void Tema::Init()
     glm::vec3 minBounds(-groundScale, 0.0f, -groundScale);
     glm::vec3 maxBounds(groundScale, 5.0f, groundScale);
 
+    attackRadius = 5.0f;
+
     enemyCount = 50;
     enemies = (Enemy *) malloc(enemyCount * sizeof(Enemy));
 
@@ -557,6 +559,32 @@ void Tema::Update(float deltaTimeSeconds)
 }
 
 
+void Tema::Attack()
+{
+    // Get player forward vector based on Y rotation
+    glm::vec3 forwardVector = glm::vec3(glm::sin(glm::radians(playerRotY)), 0, glm::cos(glm::radians(playerRotY)));
+
+    glm::vec3 circleCenter = playerPos + attackRadius * glm::normalize(forwardVector);
+
+    glm::vec3 minBounds(-groundScale, 0.0f, -groundScale);
+    glm::vec3 maxBounds(groundScale, 5.0f, groundScale);
+
+    for (int i = 0; i < enemyCount; i++)
+    {
+        float distance = glm::length(enemies[i].GetPosition() - circleCenter);
+
+        if (distance <= attackRadius)
+        {
+            printf("Enemy detected\n");
+            float randomX = minBounds.x + static_cast<float>(rand()) / RAND_MAX * (maxBounds.x - minBounds.x);
+            float randomZ = minBounds.z + static_cast<float>(rand()) / RAND_MAX * (maxBounds.z - minBounds.z);
+            enemies[i].SetPosition(glm::vec3(randomX, 0, randomZ));
+        }
+    }
+}
+
+
+
 void Tema::FrameEnd()
 {
     DrawCoordinateSystem();
@@ -815,19 +843,19 @@ void Tema::OnInputUpdate(float deltaTime, int mods)
         // Forward
         if (movement.x == 0 && movement.z < 0)
         {
-            playerRotY = 0.0f;
+            playerRotY = 180.0f;
             spot_directions[spot_count - 1] = glm::vec3(0, 0, -1);
         }
         // Forward-left
         if (movement.x < 0 && movement.z < 0)
         {
-            playerRotY = 45.0f;
+            playerRotY = 180.0f + 45.0f;
             spot_directions[spot_count - 1] = glm::vec3(-1, 0, -1);
         }
         // Forward-right
         if (movement.x > 0 && movement.z < 0)
         {
-            playerRotY = -45.0f;
+            playerRotY = 180.0f - 45.0f;
             spot_directions[spot_count - 1] = glm::vec3(1, 0, -1);
         }
         // Left
@@ -845,19 +873,19 @@ void Tema::OnInputUpdate(float deltaTime, int mods)
         // Back
         if (movement.x == 0 && movement.z > 0)
         {
-            playerRotY = 180.0f;
+            playerRotY = 0.0f;
             spot_directions[spot_count - 1] = glm::vec3(0, 0, 1);
         }
         // Back-left
         if (movement.x < 0 && movement.z > 0)
         {
-            playerRotY = 180.0f - 45.0f;
+            playerRotY = -45.0f;
             spot_directions[spot_count - 1] = glm::vec3(-1, 0, 1);
         }
         // Back-right
         if (movement.x > 0 && movement.z > 0)
         {
-            playerRotY = 180.0f + 45.0f;
+            playerRotY = 45.0f;
             spot_directions[spot_count - 1] = glm::vec3(1, 0, 1);
         }
 
@@ -931,6 +959,11 @@ void Tema::OnKeyPress(int key, int mods)
     // Add key press event
     if (key == GLFW_KEY_F) {
         controlled_light_source_index = (controlled_light_source_index + 1) % 2;
+    }
+
+    if (key == GLFW_KEY_SPACE)
+    {
+        Attack();
     }
 }
 

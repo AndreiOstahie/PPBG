@@ -90,6 +90,14 @@ float Enemy::GetLimbRotationSpeed()
 	return this->limbRotationSpeed;
 }
 
+// Setters
+
+void Enemy::SetPosition(glm::vec3 newPos)
+{
+    this->position = newPos;
+}
+
+
 
 void Enemy::Follow(glm::vec3 target, float deltaTime)
 {

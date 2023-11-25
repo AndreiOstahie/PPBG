@@ -85,6 +85,8 @@ namespace lab
         glm::vec3 ground_color;
         glm::vec3 player_color;
 
+        float attackRadius;
+
         int enemyCount;
         Enemy *enemies;
 
@@ -98,6 +100,7 @@ namespace lab
         void RenderSimpleMesh(Mesh* mesh, Shader* shader, const glm::mat4& modelMatrix, const glm::vec3& color = glm::vec3(1));
         Mesh* CreateMesh(const char* name, const std::vector<VertexFormat>& vertices, const std::vector<unsigned int>& indices);
         void LoadShader(const std::string& name);
+        void Attack();
         // =====================================================================================================================
     };
 }   // namespace lab
