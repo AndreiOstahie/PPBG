@@ -305,52 +305,10 @@ void Tema::Update(float deltaTimeSeconds)
 
 
 
-    angle += glm::radians(6.0f) * deltaTimeSeconds;
+    
+    
 
-    for (int i = 0; i < 9; i++) {
-        glm::mat4 rotation = glm::rotate(glm::mat4(1.0), angle + i * glm::radians(360.0f) / 9, glm::vec3(0, 1, 0));
 
-        point_light_positions[i] = glm::vec3(glm::mat3(rotation) * glm::vec3(5, 1.5 + sin(Engine::GetElapsedTime() + i / 2.0f), 0));
-        spot_light_positions[i] = glm::vec3(glm::mat3(rotation) * glm::vec3(3, 1.5 + sin(Engine::GetElapsedTime() + i / 2.0f), 0));
-    }
-
-    {
-        glm::mat4 model = glm::mat4(1);
-        model = glm::translate(model, glm::vec3(0, 1, 0));
-        RenderSimpleMesh(meshes["sphere"], shaders["SimpleShader"], model, glm::vec3(1, 1, 0));
-    }
-
-    {
-        glm::mat4 model = glm::mat4(1);
-        model = glm::translate(model, glm::vec3(2, 0, 0));
-        model = glm::rotate(model, glm::radians(-160.0f), glm::vec3(0, 1, 0));
-        model = glm::scale(model, glm::vec3(2.0f));
-        RenderSimpleMesh(meshes["teapot"], shaders["SimpleShader"], model, glm::vec3(1, 0, 1));
-    }
-
-    {
-        glm::mat4 model = glm::mat4(1);
-        model = glm::translate(model, glm::vec3(5, 0, 1.4));
-        model = glm::rotate(model, glm::radians(-160.0f), glm::vec3(0, 1, 0));
-        model = glm::scale(model, glm::vec3(3.0f));
-        RenderSimpleMesh(meshes["teapot"], shaders["SimpleShader"], model, glm::vec3(1, 1, 0));
-    }
-
-    {
-        glm::mat4 model = glm::mat4(1);
-        model = glm::translate(model, glm::vec3(-2, 1.0f, 0));
-        model = glm::rotate(model, glm::radians(60.0f), glm::vec3(0, 1, 0));
-        model = glm::scale(model, glm::vec3(0.05f));
-        RenderSimpleMesh(meshes["bunny"], shaders["SimpleShader"], model, glm::vec3(0, 1, 0));
-    }
-
-    {
-        glm::mat4 model = glm::mat4(1);
-        model = glm::translate(model, glm::vec3(-5, 1.5f, 1));
-        model = glm::rotate(model, glm::radians(60.0f), glm::vec3(0, 1, 0));
-        model = glm::scale(model, glm::vec3(0.1f));
-        RenderSimpleMesh(meshes["bunny"], shaders["SimpleShader"], model, glm::vec3(0, 1, 1));
-    }
 
     // Render ground
     {
@@ -447,28 +405,7 @@ void Tema::Update(float deltaTimeSeconds)
             model = glm::scale(model, glm::vec3(5.1f));
             // RenderMesh(meshes["sphere"], shaders["Simple"], model);
         }
-        
-        
     }
-
-    // Render the point lights in the scene
-    for (int i = 0; i < 9; i++)
-    {
-        glm::mat4 model = glm::mat4(1);
-        model = glm::translate(model, point_light_positions[i]);
-        model = glm::scale(model, glm::vec3(0.1f));
-        RenderMesh(meshes["sphere"], shaders["Simple"], model);
-    }
-
-    // Render the spot lights in the scene
-    for (int i = 0; i < 10; i++)
-    {
-        glm::mat4 model = glm::mat4(1);
-        model = glm::translate(model, spot_light_positions[i]);
-        model = glm::scale(model, glm::vec3(0.1f));
-        RenderMesh(meshes["sphere"], shaders["Simple"], model);
-    }
-
 
     // Render light posts and spot lights
     for (int i = 0; i < lightposts_per_row * lightposts_per_row; i++)
@@ -500,6 +437,40 @@ void Tema::Update(float deltaTimeSeconds)
         model = glm::scale(model, glm::vec3(0.1f));
         RenderMesh(meshes["sphere"], shaders["Simple"], model);
     }
+
+
+    // Set up and render lights from lab 6
+    /*
+         angle += glm::radians(6.0f) * deltaTimeSeconds;
+        for (int i = 0; i < 9; i++) {
+            glm::mat4 rotation = glm::rotate(glm::mat4(1.0), angle + i * glm::radians(360.0f) / 9, glm::vec3(0, 1, 0));
+
+            point_light_positions[i] = glm::vec3(glm::mat3(rotation) * glm::vec3(5, 1.5 + sin(Engine::GetElapsedTime() + i / 2.0f), 0));
+            spot_light_positions[i] = glm::vec3(glm::mat3(rotation) * glm::vec3(3, 1.5 + sin(Engine::GetElapsedTime() + i / 2.0f), 0));
+        }
+
+        // Render the point lights in the scene
+        for (int i = 0; i < 9; i++)
+        {
+            glm::mat4 model = glm::mat4(1);
+            model = glm::translate(model, point_light_positions[i]);
+            model = glm::scale(model, glm::vec3(0.1f));
+            RenderMesh(meshes["sphere"], shaders["Simple"], model);
+        }
+
+        // Render the spot lights in the scene
+        for (int i = 0; i < 10; i++)
+        {
+            glm::mat4 model = glm::mat4(1);
+            model = glm::translate(model, spot_light_positions[i]);
+            model = glm::scale(model, glm::vec3(0.1f));
+            RenderMesh(meshes["sphere"], shaders["Simple"], model);
+        }
+    */
+   
+
+
+    
 }
 
 
