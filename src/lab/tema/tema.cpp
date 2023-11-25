@@ -199,17 +199,20 @@ void Tema::Init()
     {
         spot_positions[spot_index] = lightpost_positions[i] + glm::vec3(-0.55f, 4.75f, -1.0f);
         spot_directions[spot_index] = glm::vec3(0, -1, 0);
-        spot_angles[spot_index] = 50.0f;
+        spot_angles[spot_index] = 30.0f;
+        spot_colors[spot_index] = glm::vec3(1, 1, 1);
         spot_index++;
 
         spot_positions[spot_index] = lightpost_positions[i] + glm::vec3(0.55f, 4.75f, 1.0f);
         spot_directions[spot_index] = glm::vec3(0, -1, 0);
-        spot_angles[spot_index] = 50.0f;
+        spot_angles[spot_index] = 30.0f;
+        spot_colors[spot_index] = glm::vec3(1, 1, 1);
         spot_index++;
     }
-    spot_positions[spot_index] = playerPos + glm::vec3(0, 3.0f, 0);
+    spot_positions[spot_index] = playerPos + glm::vec3(0, 5.0f, 0);
     spot_directions[spot_index] = glm::vec3(0, -1, 0);
-    spot_angles[spot_index] = 50.0f;
+    spot_angles[spot_index] = 60.0f;
+    spot_colors[spot_index] = glm::vec3(1, 1, 1);
 
 }
 
@@ -425,14 +428,6 @@ void Tema::Update(float deltaTimeSeconds)
         model = glm::scale(model, glm::vec3(0.1f));
         RenderMesh(meshes["sphere"], shaders["Simple"], model);
     }
-
-
-    // Render light post spot lights
-    // Render the spot lights in the scene
-    for (int i = 0; i < spot_count; i++)
-    {
-        
-    }
 }
 
 
@@ -471,6 +466,20 @@ void Tema::RenderSimpleMesh(Mesh* mesh, Shader* shader, const glm::mat4& model, 
     glUniform3fv(location, 10, glm::value_ptr(spot_light_colors[0]));
     location = glGetUniformLocation(shader->program, "spot_light_angles");
     glUniform1fv(location, 10, spot_light_angles);
+
+
+    // Send light posts spotlight data
+    printf("spot count: %d\n", spot_count);
+    location = glGetUniformLocation(shader->program, "spot_count");
+    glUniform1i(location, spot_count);
+    location = glGetUniformLocation(shader->program, "spot_positions");
+    glUniform3fv(location, spot_count, glm::value_ptr(spot_positions[0]));
+    location = glGetUniformLocation(shader->program, "spot_directions");
+    glUniform3fv(location, spot_count, glm::value_ptr(spot_directions[0]));
+    location = glGetUniformLocation(shader->program, "spot_colors");
+    glUniform3fv(location, spot_count, glm::value_ptr(spot_colors[0]));
+    location = glGetUniformLocation(shader->program, "spot_angles");
+    glUniform1fv(location, spot_count, spot_angles);
 
 
     glm::vec3 eye_position = GetSceneCamera()->m_transform->GetWorldPosition();

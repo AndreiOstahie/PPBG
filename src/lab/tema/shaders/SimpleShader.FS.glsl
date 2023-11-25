@@ -13,6 +13,16 @@ uniform vec3 spot_light_positions[10];
 uniform vec3 spot_light_colors[10];
 uniform vec3 spot_light_directions[10];
 uniform float spot_light_angles[10];
+
+
+uniform int spot_count;
+uniform vec3 spot_positions[100];
+uniform vec3 spot_directions[100];
+uniform vec3 spot_colors[100];
+uniform float spot_angles[100];
+
+
+
 uniform vec3 eye_position;
 uniform vec3 material_ka;
 uniform vec3 material_kd;
@@ -82,13 +92,14 @@ vec3 ComputePointLightSourcesIllumination()
 
 vec3 ComputeSpotLightSourcesIllumination()
 {
+    float strength = 5.0f;
     vec3 lights_illumination = vec3(0);
 
-    for (int i=0;i<10;i++) {
-        vec3 light_position = spot_light_positions[i];
-        vec3 light_color = spot_light_colors[i];
-        vec3 light_direction = spot_light_directions[i];
-        float cut_off_angle = spot_light_angles[i];
+    for (int i=0;i<spot_count;i++) {
+        vec3 light_position = spot_positions[i];
+        vec3 light_color = spot_colors[i];
+        vec3 light_direction = spot_directions[i];
+        float cut_off_angle = spot_angles[i];
 
         vec3 L = normalize(light_position-world_position);
         float cos_theta_angle = dot(-L, light_direction);
@@ -107,7 +118,7 @@ vec3 ComputeSpotLightSourcesIllumination()
             // of multiplying the illumination of the light source from the current iteration
             // with the attenuation of the illumination, the attenuation factor specific
             // to the light spot source and the color of the illumination.
-            lights_illumination += light_illumination * illumination_attenuation * quadratic_spot_light_att_factor * light_color;
+            lights_illumination += strength * light_illumination * illumination_attenuation * quadratic_spot_light_att_factor * light_color;
         }
     }
 
