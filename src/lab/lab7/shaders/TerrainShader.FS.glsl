@@ -1,0 +1,31 @@
+#version 330
+
+// Input
+in vec2 texture_coord;
+
+// Uniform properties
+uniform sampler2D texture_1;
+uniform sampler2D texture_2;
+uniform int texture_unit;
+
+// Output
+layout(location = 0) out vec4 out_color;
+
+
+void main()
+{
+    out_color = vec4(1);
+
+    vec4 color1 = texture(texture_1, texture_coord);
+    vec4 color2 = texture(texture_2, texture_coord);
+    // color2 = vec4(color2.x, color2.x, color2.x, 1);
+
+    vec4 color = mix(color1, color2.rrrr, 0.5f);
+
+
+    out_color = color;
+    
+    if(out_color.a < 0.5) {
+        discard;
+    }
+}
