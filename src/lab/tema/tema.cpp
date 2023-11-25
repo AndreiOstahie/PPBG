@@ -658,6 +658,17 @@ void Tema::OnInputUpdate(float deltaTime, int mods)
         else
         {
             isMoving = false;
+
+            // Calculate limb rotation for idle player
+            const float resetSpeed = 5.0f;
+            if (limbRotation1 != 0 && limbRotation2 != 0)
+            {
+                limbRotation1 = glm::mix(limbRotation1, 0.0f, deltaTime * resetSpeed);
+                limbRotation2 = glm::mix(limbRotation2, 0.0f, deltaTime * resetSpeed);
+            }
+            
+            printf("limb rotation 1: %f\n", limbRotation1);
+            printf("limb rotation 2: %f\n", limbRotation2);
         }
         
     }
