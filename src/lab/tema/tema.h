@@ -31,12 +31,16 @@ namespace lab
 
 
         // Variables
-        glm::vec3 point_light_positions[10];
+        
         glm::vec3 spot_light_positions[10];
         glm::vec3 spot_light_directions[10];
-        glm::vec3 point_light_colors[10];
         glm::vec3 spot_light_colors[10];
         float spot_light_angles[10];
+
+        glm::vec3 point_light_positions[10];
+        glm::vec3 point_light_colors[10];
+        
+        
 
         int controlled_light_source_index;
         glm::vec3 controlled_light_position;
@@ -56,17 +60,26 @@ namespace lab
         bool isMoving;
         glm::vec3 cameraOffset;
         float curveFactor;
+
+
         int groundScale;
         int lightpost_count;
         float lightpost_distance;
         glm::vec3 *lightpost_positions;
         int lightposts_per_row;
         float map_border;
+        int spot_count;
+        glm::vec3 *spot_positions;
+        glm::vec3 *spot_directions;
+        glm::vec3 *spot_colors;
+        float *spot_angles;
 
 
         glm::vec3 lightpost_color;
         glm::vec3 ground_color;
         glm::vec3 player_color;
+
+        
 
         // =====================================================================================================================
 

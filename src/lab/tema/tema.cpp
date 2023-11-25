@@ -185,6 +185,32 @@ void Tema::Init()
             lightpost_positions[index++] = glm::vec3(startPosX + j * lightpost_distance, 0, startPosY + i * lightpost_distance);
         }
     }
+
+    // Set up spotlights for lightposts
+    spot_count = lightposts_per_row * lightposts_per_row * 2 + 1;
+
+    spot_positions = (glm::vec3 *) malloc(spot_count * sizeof(glm::vec3));
+    spot_directions = (glm::vec3 *) malloc(spot_count * sizeof(glm::vec3));
+    spot_colors = (glm::vec3 *) malloc(spot_count * sizeof(glm::vec3));
+    spot_angles = (float *) malloc(spot_count * sizeof(glm::vec3));
+
+    int spot_index = 0;
+    for (int i = 0; i < lightposts_per_row * lightposts_per_row; i++)
+    {
+        spot_positions[spot_index] = lightpost_positions[i] + glm::vec3(-0.55f, 4.75f, -1.0f);
+        spot_directions[spot_index] = glm::vec3(0, -1, 0);
+        spot_angles[spot_index] = 50.0f;
+        spot_index++;
+
+        spot_positions[spot_index] = lightpost_positions[i] + glm::vec3(0.55f, 4.75f, 1.0f);
+        spot_directions[spot_index] = glm::vec3(0, -1, 0);
+        spot_angles[spot_index] = 50.0f;
+        spot_index++;
+    }
+    spot_positions[spot_index] = playerPos + glm::vec3(0, 3.0f, 0);
+    spot_directions[spot_index] = glm::vec3(0, -1, 0);
+    spot_angles[spot_index] = 50.0f;
+
 }
 
 
@@ -337,6 +363,16 @@ void Tema::Update(float deltaTimeSeconds)
             model = glm::translate(model, glm::vec3(0, -0.5f, 0)); // translate limb so rotation pivot is correct
             RenderSimpleMesh(meshes["cube"], shaders["SimpleShader"], model, player_color);
         }
+
+        // Spot Light
+        {
+            spot_positions[spot_count - 1] = playerPos + glm::vec3(0, 3.0f, 0);
+            glm::mat4 model = glm::mat4(1);
+            model = glm::translate(model, spot_positions[spot_count - 1]);
+            model = glm::scale(model, glm::vec3(0.1f));
+            RenderMesh(meshes["sphere"], shaders["Simple"], model);
+        }
+        
         
     }
 
@@ -359,24 +395,43 @@ void Tema::Update(float deltaTimeSeconds)
     }
 
 
-    // Render light posts
+    // Render light posts and spot lights
     for (int i = 0; i < lightposts_per_row * lightposts_per_row; i++)
     {
+        // Light posts
         glm::mat4 model = glm::mat4(1);
         model = glm::translate(model, lightpost_positions[i]);
         model = glm::rotate(model, RADIANS(30), glm::vec3(0, 1, 0));
         model = glm::translate(model, glm::vec3(0, 5.0f / 2, 0));
         model = glm::scale(model, glm::vec3(0.35f, 5.0f, 0.35f));
         RenderSimpleMesh(meshes["cube"], shaders["SimpleShader"], model, lightpost_color);
-    }
-    for (int i = 0; i < lightposts_per_row * lightposts_per_row; i++)
-    {
-        glm::mat4 model = glm::mat4(1);
+
+        model = glm::mat4(1);
         model = glm::translate(model, lightpost_positions[i]);
         model = glm::rotate(model, RADIANS(30), glm::vec3(0, 1, 0));
         model = glm::translate(model, glm::vec3(0, 5.0f, 0));
         model = glm::scale(model, glm::vec3(0.35f, 0.35f, 3.0f));
         RenderSimpleMesh(meshes["cube"], shaders["SimpleShader"], model, lightpost_color);
+
+
+        // Spot lights
+        model = glm::mat4(1);
+        model = glm::translate(model, spot_positions[i * 2]);
+        model = glm::scale(model, glm::vec3(0.1f));
+        RenderMesh(meshes["sphere"], shaders["Simple"], model);
+
+        model = glm::mat4(1);
+        model = glm::translate(model, spot_positions[i * 2 + 1]);
+        model = glm::scale(model, glm::vec3(0.1f));
+        RenderMesh(meshes["sphere"], shaders["Simple"], model);
+    }
+
+
+    // Render light post spot lights
+    // Render the spot lights in the scene
+    for (int i = 0; i < spot_count; i++)
+    {
+        
     }
 }
 
