@@ -5,6 +5,7 @@
 #include <iostream>
 
 #include "glm/gtx/string_cast.hpp"
+#include <glm/gtc/random.hpp>
 
 using namespace std;
 using namespace lab;
@@ -168,6 +169,11 @@ void Tema::Init()
     cameraOffset = glm::vec3(0, 10, 10);
     curveFactor = 0.02f;
 
+    timeSinceLastRotation = 0.0f;
+    timeBetweenRotations = 1.0f;
+    spot_rotation_speed = 0.5f;
+    spot_rotation_max_cap = 180.0f;
+
     groundScale = 50.0f;
     lightposts_per_row = 5;
     map_border = 5.0f;
@@ -193,26 +199,36 @@ void Tema::Init()
     spot_directions = (glm::vec3 *) malloc(spot_count * sizeof(glm::vec3));
     spot_colors = (glm::vec3 *) malloc(spot_count * sizeof(glm::vec3));
     spot_angles = (float *) malloc(spot_count * sizeof(glm::vec3));
+    spot_rotations = (glm::vec2 *) malloc(spot_count * sizeof(glm::vec2));
 
     int spot_index = 0;
     for (int i = 0; i < lightposts_per_row * lightposts_per_row; i++)
     {
         spot_positions[spot_index] = lightpost_positions[i] + glm::vec3(-0.55f, 4.75f, -1.0f);
         spot_directions[spot_index] = glm::vec3(0, -1, 0);
-        spot_angles[spot_index] = 30.0f;
+        spot_angles[spot_index] = 45.0f;
         spot_colors[spot_index] = glm::vec3(1, 1, 1);
         spot_index++;
 
         spot_positions[spot_index] = lightpost_positions[i] + glm::vec3(0.55f, 4.75f, 1.0f);
         spot_directions[spot_index] = glm::vec3(0, -1, 0);
-        spot_angles[spot_index] = 30.0f;
+        spot_angles[spot_index] = 45.0f;
         spot_colors[spot_index] = glm::vec3(1, 1, 1);
         spot_index++;
     }
-    spot_positions[spot_index] = playerPos + glm::vec3(0, 5.0f, 0);
-    spot_directions[spot_index] = glm::vec3(0, -1, 0);
+    spot_positions[spot_index] = playerPos + glm::vec3(0, 2.0f, 0);
+    spot_directions[spot_index] = glm::vec3(0, 0, -1);
     spot_angles[spot_index] = 60.0f;
     spot_colors[spot_index] = glm::vec3(1, 1, 1);
+
+    // Generate random rotations for each spotlight
+    for (int i = 0; i < spot_count - 1; i++)
+    {
+        float angle_x = glm::linearRand(0.0f, spot_rotation_max_cap); // Random rotation around X axis
+        float angle_z = glm::linearRand(0.0f, spot_rotation_max_cap); // Random rotation around Z axis
+
+        spot_rotations[i] = glm::vec2(angle_x, angle_z);
+    }
 
 }
 
@@ -239,6 +255,53 @@ void Tema::Update(float deltaTimeSeconds)
         playerPos + cameraOffset,
         glm::quatLookAt(-glm::normalize(cameraOffset), glm::vec3(0, 1, 0))
     );
+
+  /*  for (int i = 0; i < spot_count; i++)
+    {
+        glm::mat4 rotation = glm::rotate(glm::mat4(1), glm::radians(50 * deltaTimeSeconds), glm::vec3(1, 0, 0));
+        spot_directions[i] = glm::mat3(rotation) * spot_directions[i];
+    }*/
+    
+
+
+    // Update the rotation timer
+    timeSinceLastRotation += deltaTimeSeconds;
+
+    if (timeSinceLastRotation >= timeBetweenRotations)
+    {
+        // Reset timer
+        timeSinceLastRotation = 0.0f;
+
+        // Generate random rotations for each spotlight
+        for (int i = 0; i < spot_count - 1; i++)
+        {
+            float angle_x = glm::linearRand(0.0f, spot_rotation_max_cap); // Random rotation around X axis
+            float angle_z = glm::linearRand(0.0f, spot_rotation_max_cap); // Random rotation around Z axis
+
+            spot_rotations[i] = glm::vec2(angle_x, angle_z);
+        }
+    }
+    else
+    {
+        for (int i = 0; i < spot_count - 1; i++)
+        {
+            // Apply rotations
+            glm::mat4 rotation = glm::rotate(glm::mat4(1), glm::radians(spot_rotations[i].x * deltaTimeSeconds * spot_rotation_speed), glm::vec3(1, 0, 0))
+                                * glm::rotate(glm::mat4(1), glm::radians(spot_rotations[i].y * deltaTimeSeconds * spot_rotation_speed), glm::vec3(0, 0, 1));
+
+            // Update spot light direction
+            spot_directions[i] = glm::mat3(rotation) * spot_directions[i];
+        }
+
+        // Rotate spotlights
+        //float rotationSpeed = 30.0f;  // Adjust this value as needed
+        //glm::mat4 rotation = glm::rotate(glm::mat4(1), glm::radians(rotationSpeed * deltaTimeSeconds), glm::vec3(1, 0, 0));
+        //spot_directions[i] = glm::mat3(rotation) * spot_directions[i];
+    }
+
+
+
+
 
 
 
@@ -373,14 +436,23 @@ void Tema::Update(float deltaTimeSeconds)
             glm::mat4 model = glm::mat4(1);
             model = glm::translate(model, spot_positions[spot_count - 1]);
             model = glm::scale(model, glm::vec3(0.1f));
-            RenderMesh(meshes["sphere"], shaders["Simple"], model);
+            // RenderMesh(meshes["sphere"], shaders["Simple"], model);
+        }
+
+        // Point Light
+        {
+            point_light_positions[9] = playerPos + glm::vec3(0, 2.5f, 1);
+            glm::mat4 model = glm::mat4(1);
+            model = glm::translate(model, point_light_positions[9]);
+            model = glm::scale(model, glm::vec3(5.1f));
+            // RenderMesh(meshes["sphere"], shaders["Simple"], model);
         }
         
         
     }
 
     // Render the point lights in the scene
-    for (int i = 0; i < 10; i++)
+    for (int i = 0; i < 9; i++)
     {
         glm::mat4 model = glm::mat4(1);
         model = glm::translate(model, point_light_positions[i]);
@@ -469,7 +541,6 @@ void Tema::RenderSimpleMesh(Mesh* mesh, Shader* shader, const glm::mat4& model, 
 
 
     // Send light posts spotlight data
-    printf("spot count: %d\n", spot_count);
     location = glGetUniformLocation(shader->program, "spot_count");
     glUniform1i(location, spot_count);
     location = glGetUniformLocation(shader->program, "spot_positions");
@@ -691,41 +762,49 @@ void Tema::OnInputUpdate(float deltaTime, int mods)
         if (movement.x == 0 && movement.z < 0)
         {
             playerRotY = 0.0f;
+            spot_directions[spot_count - 1] = glm::vec3(0, 0, -1);
         }
         // Forward-left
         if (movement.x < 0 && movement.z < 0)
         {
             playerRotY = 45.0f;
+            spot_directions[spot_count - 1] = glm::vec3(-1, 0, -1);
         }
         // Forward-right
         if (movement.x > 0 && movement.z < 0)
         {
             playerRotY = -45.0f;
+            spot_directions[spot_count - 1] = glm::vec3(1, 0, -1);
         }
         // Left
         if (movement.x < 0 && movement.z == 0)
         {
             playerRotY = -90.0f;
+            spot_directions[spot_count - 1] = glm::vec3(-1, 0, 0);
         }
         // Right
         if (movement.x > 0 && movement.z == 0)
         {
             playerRotY = 90.0f;
+            spot_directions[spot_count - 1] = glm::vec3(1, 0, 0);
         }
         // Back
         if (movement.x == 0 && movement.z > 0)
         {
             playerRotY = 180.0f;
+            spot_directions[spot_count - 1] = glm::vec3(0, 0, 1);
         }
         // Back-left
         if (movement.x < 0 && movement.z > 0)
         {
             playerRotY = 180.0f - 45.0f;
+            spot_directions[spot_count - 1] = glm::vec3(-1, 0, 1);
         }
         // Back-right
         if (movement.x > 0 && movement.z > 0)
         {
             playerRotY = 180.0f + 45.0f;
+            spot_directions[spot_count - 1] = glm::vec3(1, 0, 1);
         }
 
         // Normalize the movement vector

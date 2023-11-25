@@ -72,6 +72,7 @@ float ComputeDistanceAttenuation(vec3 light_position, vec3 point_position)
 
 vec3 ComputePointLightSourcesIllumination()
 {
+    float strength = 5.0f; 
     vec3 lights_illumination = vec3(0);
 
     for (int i=0;i<10;i++) {
@@ -84,7 +85,7 @@ vec3 ComputePointLightSourcesIllumination()
         // TODO(student): Add to the illumination of all light sources the result
         // of multiplying the illumination of the light source from the current iteration
         // with the attenuation of the illumination and the color of the illumination.
-        lights_illumination += light_illumination * illumination_attenuation * light_color;
+        lights_illumination += strength * light_illumination * illumination_attenuation * light_color;
     }
 
     return lights_illumination;
@@ -92,7 +93,7 @@ vec3 ComputePointLightSourcesIllumination()
 
 vec3 ComputeSpotLightSourcesIllumination()
 {
-    float strength = 5.0f;
+    float strength = 10.0f;
     vec3 lights_illumination = vec3(0);
 
     for (int i=0;i<spot_count;i++) {

@@ -73,6 +73,11 @@ namespace lab
         glm::vec3 *spot_directions;
         glm::vec3 *spot_colors;
         float *spot_angles;
+        glm::vec2 *spot_rotations;
+        float timeSinceLastRotation;
+        float timeBetweenRotations;
+        float spot_rotation_speed;
+        float spot_rotation_max_cap;
 
 
         glm::vec3 lightpost_color;
