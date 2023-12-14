@@ -8,6 +8,7 @@
 #include "lab/lab6/lab6.h"
 #include "lab/lab7/lab7.h"
 #include "lab/lab8/lab8.h"
+#include "lab/lab9/lab9.h"
 
 
 #include "lab/tema/tema.h"
