@@ -52,10 +52,8 @@ void main()
 
     if (surface_type == SURFACE_TYPE_TRANSLATION)
     {
-        for (int k = 0; k < no_of_instances; k++)
-        {
-            float instanceTranslate1 = k * max_translate / float(no_of_instances);
-            float instanceTranslate2 = (k + 1) * max_translate / float(no_of_instances);
+            float instanceTranslate1 = instance[0] * max_translate / float(no_of_instances);
+            float instanceTranslate2 = (instance[0] + 1) * max_translate / float(no_of_instances);
 
             for (int i = 0; i <= no_of_generated_points; i++)
             {
@@ -80,14 +78,11 @@ void main()
             }
 
             EndPrimitive();
-        }
     }
     else if (surface_type == SURFACE_TYPE_ROTATION)
     {
-        for (int k = 0; k < no_of_instances; k++)
-        {
-            float instanceTranslate1 = k * max_rotate / float(no_of_instances);
-            float instanceTranslate2 = (k + 1) * max_rotate / float(no_of_instances);
+            float instanceTranslate1 = instance[0] * max_rotate / float(no_of_instances);
+            float instanceTranslate2 = (instance[0] + 1) * max_rotate / float(no_of_instances);
 
             for (int i = 0; i <= no_of_generated_points; i++)
             {
@@ -112,7 +107,6 @@ void main()
             }
 
             EndPrimitive();
-        }
     }
     
 

@@ -21,7 +21,7 @@ Lab9::Lab9()
     max_translate = 8.0f;                   // for the translation surface, it's the distance between the first and the last curve
     max_rotate = glm::radians(360.0f);      // for the rotation surface, it's the angle between the first and the last curve
 
-    surface_type = 1;
+    surface_type = 0;
 
     // Define control points
     control_p0 = glm::vec3(-4.0, -2.5, 1.0);
