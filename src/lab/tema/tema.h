@@ -117,7 +117,7 @@ namespace lab
         void RenderSimpleMesh(Mesh* mesh, Shader* shader, const glm::mat4& modelMatrix, const glm::mat4& viewMatrix, const glm::mat4& projectionMatrix, const glm::vec3& color = glm::vec3(1));
         Mesh* CreateMesh(const char* name, const std::vector<VertexFormat>& vertices, const std::vector<unsigned int>& indices);
         void LoadShader(const std::string& name);
-        void Attack();
+        void Attack(bool mainPlayer);
         void EnableDuoMode();
         void DrawScene(gfxc::Camera* camera, const transform2D::ViewportSpace& viewport_space, float deltaTimeSeconds);
         // =====================================================================================================================

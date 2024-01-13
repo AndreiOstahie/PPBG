@@ -361,28 +361,55 @@ void Tema::Update(float deltaTimeSeconds)
 }
 
 
-void Tema::Attack()
+void Tema::Attack(bool mainPlayer)
 {
-    // Get player forward vector based on Y rotation
-    glm::vec3 forwardVector = glm::vec3(glm::sin(glm::radians(playerRotY)), 0, glm::cos(glm::radians(playerRotY)));
-
-    glm::vec3 circleCenter = playerPos + attackRadius * glm::normalize(forwardVector);
-
-    glm::vec3 minBounds(-groundScale, 0.0f, -groundScale);
-    glm::vec3 maxBounds(groundScale, 5.0f, groundScale);
-
-    for (int i = 0; i < enemyCount; i++)
+    if (mainPlayer)
     {
-        float distance = glm::length(enemies[i].GetPosition() - circleCenter);
+        // Get player forward vector based on Y rotation
+        glm::vec3 forwardVector = glm::vec3(glm::sin(glm::radians(playerRotY)), 0, glm::cos(glm::radians(playerRotY)));
 
-        if (distance <= attackRadius)
+        glm::vec3 circleCenter = playerPos + attackRadius * glm::normalize(forwardVector);
+
+        glm::vec3 minBounds(-groundScale, 0.0f, -groundScale);
+        glm::vec3 maxBounds(groundScale, 5.0f, groundScale);
+
+        for (int i = 0; i < enemyCount; i++)
         {
-            printf("Enemy detected\n");
-            float randomX = minBounds.x + static_cast<float>(rand()) / RAND_MAX * (maxBounds.x - minBounds.x);
-            float randomZ = minBounds.z + static_cast<float>(rand()) / RAND_MAX * (maxBounds.z - minBounds.z);
-            enemies[i].SetPosition(glm::vec3(randomX, 0, randomZ));
+            float distance = glm::length(enemies[i].GetPosition() - circleCenter);
+
+            if (distance <= attackRadius)
+            {
+                printf("Enemy detected\n");
+                float randomX = minBounds.x + static_cast<float>(rand()) / RAND_MAX * (maxBounds.x - minBounds.x);
+                float randomZ = minBounds.z + static_cast<float>(rand()) / RAND_MAX * (maxBounds.z - minBounds.z);
+                enemies[i].SetPosition(glm::vec3(randomX, 0, randomZ));
+            }
         }
     }
+    else
+    {
+        // Get player forward vector based on Y rotation
+        glm::vec3 forwardVector = glm::vec3(glm::sin(glm::radians(second_playerRotY)), 0, glm::cos(glm::radians(second_playerRotY)));
+
+        glm::vec3 circleCenter = second_playerPos + attackRadius * glm::normalize(forwardVector);
+
+        glm::vec3 minBounds(-groundScale, 0.0f, -groundScale);
+        glm::vec3 maxBounds(groundScale, 5.0f, groundScale);
+
+        for (int i = 0; i < enemyCount; i++)
+        {
+            float distance = glm::length(enemies[i].GetPosition() - circleCenter);
+
+            if (distance <= attackRadius)
+            {
+                printf("Enemy detected\n");
+                float randomX = minBounds.x + static_cast<float>(rand()) / RAND_MAX * (maxBounds.x - minBounds.x);
+                float randomZ = minBounds.z + static_cast<float>(rand()) / RAND_MAX * (maxBounds.z - minBounds.z);
+                enemies[i].SetPosition(glm::vec3(randomX, 0, randomZ));
+            }
+        }
+    }
+    
 }
 
 
@@ -627,8 +654,19 @@ void Tema::DrawScene(gfxc::Camera* camera, const transform2D::ViewportSpace& vie
     {
         for (int i = 0; i < enemyCount; i++)
         {
+            float distanceToMainPlayer = glm::length(enemies[i].GetPosition() - playerPos);
+            float distanceToSecondPlayer = glm::length(enemies[i].GetPosition() - second_playerPos);
+
             // Enemies follow player
-            enemies[i].Follow(playerPos, deltaTimeSeconds);
+            if (distanceToMainPlayer <= distanceToSecondPlayer)
+            {
+                enemies[i].Follow(playerPos, deltaTimeSeconds);
+            }
+            else
+            {
+                enemies[i].Follow(second_playerPos, deltaTimeSeconds);
+            }
+            
             enemies[i].Animate(deltaTimeSeconds);
 
 
@@ -1167,7 +1205,13 @@ void Tema::OnKeyPress(int key, int mods)
 
     if (key == GLFW_KEY_SPACE)
     {
-        Attack();
+        // Main player attack
+        Attack(true);
+    }
+    if (key == GLFW_KEY_ENTER)
+    {
+        // Main player attack
+        Attack(false);
     }
 
     if (key == GLFW_KEY_P)
