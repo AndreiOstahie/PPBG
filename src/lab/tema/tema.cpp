@@ -290,6 +290,8 @@ void Tema::Update(float deltaTimeSeconds)
     //std::cout << "Direction: " << glm::to_string(spot_directions[spot_count - 1]) << std::endl;
 
 
+    // Spotlights rotation
+
     // Update the rotation timer
     timeSinceLastRotation += deltaTimeSeconds;
 
@@ -317,6 +319,28 @@ void Tema::Update(float deltaTimeSeconds)
 
             // Update spot light direction
             spot_directions[i] = glm::mat3(rotation) * spot_directions[i];
+        }
+    }
+
+
+    // Enemy movement
+    {
+        for (int i = 0; i < enemyCount; i++)
+        {
+            float distanceToMainPlayer = glm::length(enemies[i].GetPosition() - playerPos);
+            float distanceToSecondPlayer = glm::length(enemies[i].GetPosition() - second_playerPos);
+
+            // Enemies follow player
+            if (distanceToSecondPlayer <= distanceToMainPlayer && duoModeEnabled)
+            {
+                enemies[i].Follow(second_playerPos, deltaTimeSeconds);
+            }
+            else
+            {
+                enemies[i].Follow(playerPos, deltaTimeSeconds);
+            }
+
+            enemies[i].Animate(deltaTimeSeconds);
         }
     }
 
@@ -432,13 +456,20 @@ void Tema::DrawScene(gfxc::Camera* camera, const transform2D::ViewportSpace& vie
     // information received from the 'viewport_space' parameter.
     glViewport(viewport_space.x, viewport_space.y, viewport_space.width, viewport_space.height);
 
+
+    bool useMainCamera = true;
+    if (camera == secondCamera)
+    {
+        useMainCamera = false;
+    }
+    
     
     // Render ground
     {
         glm::mat4 model = glm::mat4(1);
         model = glm::translate(model, glm::vec3(0, 0.1f, 0));
         model = glm::scale(model, glm::vec3(groundScale));
-        RenderSimpleMesh(meshes["ground"], shaders["SimpleShader"], model, view, projection, ground_color);
+        RenderSimpleMesh(meshes["ground"], shaders["SimpleShader"], model, view, projection, ground_color, useMainCamera);
     }
 
     // Render Player Model
@@ -450,7 +481,7 @@ void Tema::DrawScene(gfxc::Camera* camera, const transform2D::ViewportSpace& vie
             model = glm::rotate(model, RADIANS(playerRotY), glm::vec3(0, 1, 0)); // player rotation
             model = glm::translate(model, glm::vec3(0, 1.55f, 0)); // translate limb relative to player's body
             model = glm::scale(model, glm::vec3(0.5f, 1.0f, 0.25f));
-            RenderSimpleMesh(meshes["cube"], shaders["SimpleShader"], model, view, projection, player_color);
+            RenderSimpleMesh(meshes["cube"], shaders["SimpleShader"], model, view, projection, player_color, useMainCamera);
         }
 
         // Head
@@ -460,7 +491,7 @@ void Tema::DrawScene(gfxc::Camera* camera, const transform2D::ViewportSpace& vie
             model = glm::rotate(model, RADIANS(playerRotY), glm::vec3(0, 1, 0)); // player rotation
             model = glm::translate(model, glm::vec3(0, 2.2f, 0)); // translate limb relative to player's body
             model = glm::scale(model, glm::vec3(0.2f, 0.2f, 0.2f));
-            RenderSimpleMesh(meshes["cube"], shaders["SimpleShader"], model, view, projection, player_color);
+            RenderSimpleMesh(meshes["cube"], shaders["SimpleShader"], model, view, projection, player_color, useMainCamera);
         }
 
         // Right Arm
@@ -472,7 +503,7 @@ void Tema::DrawScene(gfxc::Camera* camera, const transform2D::ViewportSpace& vie
             model = glm::rotate(model, RADIANS(limbRotation1), glm::vec3(1, 0, 0)); // rotate limb to desired angle
             model = glm::scale(model, glm::vec3(0.2f, 1.0f, 0.2f)); // scale limb to desired ratio
             model = glm::translate(model, glm::vec3(0, -0.5f, 0)); // translate limb so rotation pivot is correct
-            RenderSimpleMesh(meshes["cube"], shaders["SimpleShader"], model, view, projection, player_color);
+            RenderSimpleMesh(meshes["cube"], shaders["SimpleShader"], model, view, projection, player_color, useMainCamera);
         }
         // Left Arm
         {
@@ -483,7 +514,7 @@ void Tema::DrawScene(gfxc::Camera* camera, const transform2D::ViewportSpace& vie
             model = glm::rotate(model, RADIANS(limbRotation2), glm::vec3(1, 0, 0)); // rotate limb to desired angle
             model = glm::scale(model, glm::vec3(0.2f, 1.0f, 0.2f)); // scale limb to desired ratio
             model = glm::translate(model, glm::vec3(0, -0.5f, 0)); // translate limb so rotation pivot is correct
-            RenderSimpleMesh(meshes["cube"], shaders["SimpleShader"], model, view, projection, player_color);
+            RenderSimpleMesh(meshes["cube"], shaders["SimpleShader"], model, view, projection, player_color, useMainCamera);
         }
 
         // Right Leg
@@ -495,7 +526,7 @@ void Tema::DrawScene(gfxc::Camera* camera, const transform2D::ViewportSpace& vie
             model = glm::rotate(model, RADIANS(limbRotation2), glm::vec3(1, 0, 0)); // rotate limb to desired angle
             model = glm::scale(model, glm::vec3(0.2f, 1.0f, 0.2f)); // scale limb to desired ratio
             model = glm::translate(model, glm::vec3(0, -0.5f, 0)); // translate limb so rotation pivot is correct
-            RenderSimpleMesh(meshes["cube"], shaders["SimpleShader"], model, view, projection, player_color);
+            RenderSimpleMesh(meshes["cube"], shaders["SimpleShader"], model, view, projection, player_color, useMainCamera);
         }
         // Left Leg
         {
@@ -506,7 +537,7 @@ void Tema::DrawScene(gfxc::Camera* camera, const transform2D::ViewportSpace& vie
             model = glm::rotate(model, RADIANS(limbRotation1), glm::vec3(1, 0, 0)); // rotate limb to desired angle
             model = glm::scale(model, glm::vec3(0.2f, 1.0f, 0.2f)); // scale limb to desired ratio
             model = glm::translate(model, glm::vec3(0, -0.5f, 0)); // translate limb so rotation pivot is correct
-            RenderSimpleMesh(meshes["cube"], shaders["SimpleShader"], model, view, projection, player_color);
+            RenderSimpleMesh(meshes["cube"], shaders["SimpleShader"], model, view, projection, player_color, useMainCamera);
         }
 
         // Spot Light
@@ -538,7 +569,7 @@ void Tema::DrawScene(gfxc::Camera* camera, const transform2D::ViewportSpace& vie
             model = glm::rotate(model, RADIANS(second_playerRotY), glm::vec3(0, 1, 0)); // player rotation
             model = glm::translate(model, glm::vec3(0, 1.55f, 0)); // translate limb relative to player's body
             model = glm::scale(model, glm::vec3(0.5f, 1.0f, 0.25f));
-            RenderSimpleMesh(meshes["cube"], shaders["SimpleShader"], model, view, projection, second_player_color);
+            RenderSimpleMesh(meshes["cube"], shaders["SimpleShader"], model, view, projection, second_player_color, useMainCamera);
         }
 
         // Head
@@ -548,7 +579,7 @@ void Tema::DrawScene(gfxc::Camera* camera, const transform2D::ViewportSpace& vie
             model = glm::rotate(model, RADIANS(second_playerRotY), glm::vec3(0, 1, 0)); // player rotation
             model = glm::translate(model, glm::vec3(0, 2.2f, 0)); // translate limb relative to player's body
             model = glm::scale(model, glm::vec3(0.2f, 0.2f, 0.2f));
-            RenderSimpleMesh(meshes["cube"], shaders["SimpleShader"], model, view, projection, second_player_color);
+            RenderSimpleMesh(meshes["cube"], shaders["SimpleShader"], model, view, projection, second_player_color, useMainCamera);
         }
 
         // Right Arm
@@ -560,7 +591,7 @@ void Tema::DrawScene(gfxc::Camera* camera, const transform2D::ViewportSpace& vie
             model = glm::rotate(model, RADIANS(second_limbRotation1), glm::vec3(1, 0, 0)); // rotate limb to desired angle
             model = glm::scale(model, glm::vec3(0.2f, 1.0f, 0.2f)); // scale limb to desired ratio
             model = glm::translate(model, glm::vec3(0, -0.5f, 0)); // translate limb so rotation pivot is correct
-            RenderSimpleMesh(meshes["cube"], shaders["SimpleShader"], model, view, projection, second_player_color);
+            RenderSimpleMesh(meshes["cube"], shaders["SimpleShader"], model, view, projection, second_player_color, useMainCamera);
         }
         // Left Arm
         {
@@ -571,7 +602,7 @@ void Tema::DrawScene(gfxc::Camera* camera, const transform2D::ViewportSpace& vie
             model = glm::rotate(model, RADIANS(second_limbRotation2), glm::vec3(1, 0, 0)); // rotate limb to desired angle
             model = glm::scale(model, glm::vec3(0.2f, 1.0f, 0.2f)); // scale limb to desired ratio
             model = glm::translate(model, glm::vec3(0, -0.5f, 0)); // translate limb so rotation pivot is correct
-            RenderSimpleMesh(meshes["cube"], shaders["SimpleShader"], model, view, projection, second_player_color);
+            RenderSimpleMesh(meshes["cube"], shaders["SimpleShader"], model, view, projection, second_player_color, useMainCamera);
         }
 
         // Right Leg
@@ -583,7 +614,7 @@ void Tema::DrawScene(gfxc::Camera* camera, const transform2D::ViewportSpace& vie
             model = glm::rotate(model, RADIANS(second_limbRotation2), glm::vec3(1, 0, 0)); // rotate limb to desired angle
             model = glm::scale(model, glm::vec3(0.2f, 1.0f, 0.2f)); // scale limb to desired ratio
             model = glm::translate(model, glm::vec3(0, -0.5f, 0)); // translate limb so rotation pivot is correct
-            RenderSimpleMesh(meshes["cube"], shaders["SimpleShader"], model, view, projection, second_player_color);
+            RenderSimpleMesh(meshes["cube"], shaders["SimpleShader"], model, view, projection, second_player_color, useMainCamera);
         }
         // Left Leg
         {
@@ -594,7 +625,7 @@ void Tema::DrawScene(gfxc::Camera* camera, const transform2D::ViewportSpace& vie
             model = glm::rotate(model, RADIANS(second_limbRotation1), glm::vec3(1, 0, 0)); // rotate limb to desired angle
             model = glm::scale(model, glm::vec3(0.2f, 1.0f, 0.2f)); // scale limb to desired ratio
             model = glm::translate(model, glm::vec3(0, -0.5f, 0)); // translate limb so rotation pivot is correct
-            RenderSimpleMesh(meshes["cube"], shaders["SimpleShader"], model, view, projection, second_player_color);
+            RenderSimpleMesh(meshes["cube"], shaders["SimpleShader"], model, view, projection, second_player_color, useMainCamera);
         }
         // Spot Light
         {
@@ -626,14 +657,14 @@ void Tema::DrawScene(gfxc::Camera* camera, const transform2D::ViewportSpace& vie
         model = glm::rotate(model, RADIANS(30), glm::vec3(0, 1, 0));
         model = glm::translate(model, glm::vec3(0, 5.0f / 2, 0));
         model = glm::scale(model, glm::vec3(0.35f, 5.0f, 0.35f));
-        RenderSimpleMesh(meshes["cube"], shaders["SimpleShader"], model, view, projection, lightpost_color);
+        RenderSimpleMesh(meshes["cube"], shaders["SimpleShader"], model, view, projection, lightpost_color, useMainCamera);
 
         model = glm::mat4(1);
         model = glm::translate(model, lightpost_positions[i]);
         model = glm::rotate(model, RADIANS(30), glm::vec3(0, 1, 0));
         model = glm::translate(model, glm::vec3(0, 5.0f, 0));
         model = glm::scale(model, glm::vec3(0.35f, 0.35f, 3.0f));
-        RenderSimpleMesh(meshes["cube"], shaders["SimpleShader"], model, view, projection, lightpost_color);
+        RenderSimpleMesh(meshes["cube"], shaders["SimpleShader"], model, view, projection, lightpost_color, useMainCamera);
 
 
         // Spot lights
@@ -641,35 +672,19 @@ void Tema::DrawScene(gfxc::Camera* camera, const transform2D::ViewportSpace& vie
         model = glm::translate(model, spot_positions[i * 2]);
         model = glm::scale(model, glm::vec3(0.1f));
         // RenderMesh(meshes["sphere"], shaders["Simple"], model);
-        RenderSimpleMesh(meshes["sphere"], shaders["SimpleShader"], model, view, projection, glm::vec3(1, 1, 1));
+        RenderSimpleMesh(meshes["sphere"], shaders["SimpleShader"], model, view, projection, glm::vec3(1, 1, 1), useMainCamera);
 
         model = glm::mat4(1);
         model = glm::translate(model, spot_positions[i * 2 + 1]);
         model = glm::scale(model, glm::vec3(0.1f));
         // RenderMesh(meshes["sphere"], shaders["Simple"], model);
-        RenderSimpleMesh(meshes["sphere"], shaders["SimpleShader"], model, view, projection, glm::vec3(1, 1, 1));
+        RenderSimpleMesh(meshes["sphere"], shaders["SimpleShader"], model, view, projection, glm::vec3(1, 1, 1), useMainCamera);
     }
 
     // Enemies
     {
         for (int i = 0; i < enemyCount; i++)
         {
-            float distanceToMainPlayer = glm::length(enemies[i].GetPosition() - playerPos);
-            float distanceToSecondPlayer = glm::length(enemies[i].GetPosition() - second_playerPos);
-
-            // Enemies follow player
-            if (distanceToMainPlayer <= distanceToSecondPlayer)
-            {
-                enemies[i].Follow(playerPos, deltaTimeSeconds);
-            }
-            else
-            {
-                enemies[i].Follow(second_playerPos, deltaTimeSeconds);
-            }
-            
-            enemies[i].Animate(deltaTimeSeconds);
-
-
             // Render enemies
             {
                 // Body
@@ -679,7 +694,7 @@ void Tema::DrawScene(gfxc::Camera* camera, const transform2D::ViewportSpace& vie
                     model = glm::rotate(model, RADIANS(enemies[i].GetRotation().y), glm::vec3(0, 1, 0)); // enemy rotation
                     model = glm::translate(model, glm::vec3(0, 1.55f, 0)); // translate limb relative to enemy's body
                     model = glm::scale(model, glm::vec3(0.5f, 1.0f, 0.25f));
-                    RenderSimpleMesh(meshes["cube"], shaders["SimpleShader"], model, view, projection, enemies[i].GetColor());
+                    RenderSimpleMesh(meshes["cube"], shaders["SimpleShader"], model, view, projection, enemies[i].GetColor(), useMainCamera);
                 }
 
                 // Head
@@ -689,7 +704,7 @@ void Tema::DrawScene(gfxc::Camera* camera, const transform2D::ViewportSpace& vie
                     model = glm::rotate(model, RADIANS(enemies[i].GetRotation().y), glm::vec3(0, 1, 0)); // enemy rotation
                     model = glm::translate(model, glm::vec3(0, 2.2f, 0)); // translate limb relative to enemy's body
                     model = glm::scale(model, glm::vec3(0.2f, 0.2f, 0.2f));
-                    RenderSimpleMesh(meshes["cube"], shaders["SimpleShader"], model, view, projection, enemies[i].GetColor());
+                    RenderSimpleMesh(meshes["cube"], shaders["SimpleShader"], model, view, projection, enemies[i].GetColor(), useMainCamera);
                 }
 
                 // Right Arm
@@ -701,7 +716,7 @@ void Tema::DrawScene(gfxc::Camera* camera, const transform2D::ViewportSpace& vie
                     model = glm::rotate(model, RADIANS(enemies[i].GetLimbRotation1()), glm::vec3(1, 0, 0)); // rotate limb to desired angle
                     model = glm::scale(model, glm::vec3(0.2f, 1.0f, 0.2f)); // scale limb to desired ratio
                     model = glm::translate(model, glm::vec3(0, -0.5f, 0)); // translate limb so rotation pivot is correct
-                    RenderSimpleMesh(meshes["cube"], shaders["SimpleShader"], model, view, projection, enemies[i].GetColor());
+                    RenderSimpleMesh(meshes["cube"], shaders["SimpleShader"], model, view, projection, enemies[i].GetColor(), useMainCamera);
                 }
                 // Left Arm
                 {
@@ -712,7 +727,7 @@ void Tema::DrawScene(gfxc::Camera* camera, const transform2D::ViewportSpace& vie
                     model = glm::rotate(model, RADIANS(enemies[i].GetLimbRotation2()), glm::vec3(1, 0, 0)); // rotate limb to desired angle
                     model = glm::scale(model, glm::vec3(0.2f, 1.0f, 0.2f)); // scale limb to desired ratio
                     model = glm::translate(model, glm::vec3(0, -0.5f, 0)); // translate limb so rotation pivot is correct
-                    RenderSimpleMesh(meshes["cube"], shaders["SimpleShader"], model, view, projection, enemies[i].GetColor());
+                    RenderSimpleMesh(meshes["cube"], shaders["SimpleShader"], model, view, projection, enemies[i].GetColor(), useMainCamera);
                 }
 
                 // Right Leg
@@ -724,7 +739,7 @@ void Tema::DrawScene(gfxc::Camera* camera, const transform2D::ViewportSpace& vie
                     model = glm::rotate(model, RADIANS(enemies[i].GetLimbRotation2()), glm::vec3(1, 0, 0)); // rotate limb to desired angle
                     model = glm::scale(model, glm::vec3(0.2f, 1.0f, 0.2f)); // scale limb to desired ratio
                     model = glm::translate(model, glm::vec3(0, -0.5f, 0)); // translate limb so rotation pivot is correct
-                    RenderSimpleMesh(meshes["cube"], shaders["SimpleShader"], model, view, projection, enemies[i].GetColor());
+                    RenderSimpleMesh(meshes["cube"], shaders["SimpleShader"], model, view, projection, enemies[i].GetColor(), useMainCamera);
                 }
                 // Left Leg
                 {
@@ -735,7 +750,7 @@ void Tema::DrawScene(gfxc::Camera* camera, const transform2D::ViewportSpace& vie
                     model = glm::rotate(model, RADIANS(enemies[i].GetLimbRotation1()), glm::vec3(1, 0, 0)); // rotate limb to desired angle
                     model = glm::scale(model, glm::vec3(0.2f, 1.0f, 0.2f)); // scale limb to desired ratio
                     model = glm::translate(model, glm::vec3(0, -0.5f, 0)); // translate limb so rotation pivot is correct
-                    RenderSimpleMesh(meshes["cube"], shaders["SimpleShader"], model, view, projection, enemies[i].GetColor());
+                    RenderSimpleMesh(meshes["cube"], shaders["SimpleShader"], model, view, projection, enemies[i].GetColor(), useMainCamera);
                 }
             }
         }
@@ -749,7 +764,7 @@ void Tema::FrameEnd()
     // DrawCoordinateSystem();
 }
 
-void Tema::RenderSimpleMesh(Mesh* mesh, Shader* shader, const glm::mat4& model, const glm::mat4& view, const glm::mat4& projection, const glm::vec3& object_color)
+void Tema::RenderSimpleMesh(Mesh* mesh, Shader* shader, const glm::mat4& model, const glm::mat4& view, const glm::mat4& projection, const glm::vec3& object_color, bool useMainCamera)
 {
     if (!mesh || !shader || !shader->GetProgramID())
         return;
@@ -793,8 +808,18 @@ void Tema::RenderSimpleMesh(Mesh* mesh, Shader* shader, const glm::mat4& model, 
     location = glGetUniformLocation(shader->program, "spot_angles");
     glUniform1fv(location, spot_count, spot_angles);
 
+    glm::vec3 eye_position;
 
-    glm::vec3 eye_position = GetSceneCamera()->m_transform->GetWorldPosition();
+    if (useMainCamera)
+    {
+        eye_position = GetSceneCamera()->m_transform->GetWorldPosition();
+    }
+    else
+    {
+        eye_position = secondCamera->m_transform->GetWorldPosition();
+    }
+
+    
 
     // TODO(student): Set eye position (camera position) uniform
     int eye_position_location = glGetUniformLocation(shader->program, "eye_position");

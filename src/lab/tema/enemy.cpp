@@ -90,6 +90,11 @@ float Enemy::GetLimbRotationSpeed()
 	return this->limbRotationSpeed;
 }
 
+float Enemy::GetSpeed()
+{
+    return this->speed;
+}
+
 // Setters
 
 void Enemy::SetPosition(glm::vec3 newPos)

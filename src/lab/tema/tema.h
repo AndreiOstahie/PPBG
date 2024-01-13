@@ -114,7 +114,7 @@ namespace lab
 
         // Methods
         // =====================================================================================================================
-        void RenderSimpleMesh(Mesh* mesh, Shader* shader, const glm::mat4& modelMatrix, const glm::mat4& viewMatrix, const glm::mat4& projectionMatrix, const glm::vec3& color = glm::vec3(1));
+        void RenderSimpleMesh(Mesh* mesh, Shader* shader, const glm::mat4& modelMatrix, const glm::mat4& viewMatrix, const glm::mat4& projectionMatrix, const glm::vec3& color = glm::vec3(1), const bool useMainCamera = true);
         Mesh* CreateMesh(const char* name, const std::vector<VertexFormat>& vertices, const std::vector<unsigned int>& indices);
         void LoadShader(const std::string& name);
         void Attack(bool mainPlayer);

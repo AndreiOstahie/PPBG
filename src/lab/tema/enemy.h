@@ -23,6 +23,7 @@ namespace lab
         int GetLimbDirection1();
         int GetLimbDirection2();
         float GetLimbRotationSpeed();
+        float GetSpeed();
 
         // Setters
         void SetPosition(glm::vec3 newPos);
