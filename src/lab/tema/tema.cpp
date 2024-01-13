@@ -8,6 +8,8 @@
 #include "glm/gtx/string_cast.hpp"
 #include <glm/gtc/random.hpp>
 
+#include "lab/lab4/transform3D.h"
+
 using namespace std;
 using namespace lab;
 
@@ -131,18 +133,8 @@ void Tema::Init()
     // Light & material properties
     {
         point_light_positions[9] = glm::vec3(0, 1, 1);
-        spot_light_positions[9] = glm::vec3(1, 1, 1);
-
         for (int i = 0; i < 10; i++) {
-            spot_light_directions[i] = glm::vec3(0, -1, 0);
-            spot_light_angles[i] = glm::radians(10.0f + rand() % 50);
-
             point_light_colors[i] = glm::vec3(
-                rand() % 256 / 255.0f,
-                rand() % 256 / 255.0f,
-                rand() % 256 / 255.0f
-            );
-            spot_light_colors[i] = glm::vec3(
                 rand() % 256 / 255.0f,
                 rand() % 256 / 255.0f,
                 rand() % 256 / 255.0f
@@ -152,12 +144,15 @@ void Tema::Init()
 
 
     // Variables init
+    duoModeEnabled = false;
+
     lightpost_color = glm::vec3(1, 0, 0);
     ground_color = glm::vec3(0, 1, 0);
     player_color = glm::vec3(0, 0, 1);
 
     playerRotY = 0.0f;
     playerPos = glm::vec3(0, 0, 0);
+    playerModelMat = glm::mat4(0);
     playerSpeed = 15.0f;
     limbRotation1 = 0.0f;
     limbRotation2 = 0.0f;
@@ -185,6 +180,21 @@ void Tema::Init()
 
     enemyCount = 50;
     enemies = (Enemy *) malloc(enemyCount * sizeof(Enemy));
+
+
+
+    // Second player init
+    second_player_color = glm::vec3(1, 1, 0);
+    second_playerRotY = 0.0f;
+    second_playerPos = glm::vec3(0, 0, 0);
+    second_playerModelMat = glm::mat4(0);
+    second_limbRotation1 = 0.0f;
+    second_limbRotation2 = 0.0f;
+    second_limbDirection1 = 0;
+    second_limbDirection2 = 1;
+    second_isMoving = false;
+
+
 
     // Create enemies
     for (int i = 0; i < enemyCount; i++)
@@ -215,7 +225,7 @@ void Tema::Init()
     }
 
     // Set up spotlights for lightposts
-    spot_count = lightposts_per_row * lightposts_per_row * 2 + 1;
+    spot_count = lightposts_per_row * lightposts_per_row * 2 + 2;
 
     spot_positions = (glm::vec3 *) malloc(spot_count * sizeof(glm::vec3));
     spot_directions = (glm::vec3 *) malloc(spot_count * sizeof(glm::vec3));
@@ -238,13 +248,18 @@ void Tema::Init()
         spot_colors[spot_index] = glm::vec3(1, 1, 1);
         spot_index++;
     }
-    spot_positions[spot_index] = playerPos + glm::vec3(0, 2.0f, 0);
+    spot_positions[spot_index] = playerPos + glm::vec3(0, 3.0f, 0);
     spot_directions[spot_index] = glm::vec3(0, 0, -1);
     spot_angles[spot_index] = 60.0f;
     spot_colors[spot_index] = glm::vec3(1, 1, 1);
 
+    spot_positions[spot_index + 1] = second_playerPos + glm::vec3(0, 3.0f, 0);
+    spot_directions[spot_index + 1] = glm::vec3(0, 0, -1);
+    spot_angles[spot_index + 1] = 60.0f;
+    spot_colors[spot_index + 1] = glm::vec3(1, 1, 1);
+
     // Generate random rotations for each spotlight
-    for (int i = 0; i < spot_count - 1; i++)
+    for (int i = 0; i < spot_count - 2; i++)
     {
         float angle_x = glm::linearRand(0.0f, spot_rotation_max_cap); // Random rotation around X axis
         float angle_z = glm::linearRand(0.0f, spot_rotation_max_cap); // Random rotation around Z axis
@@ -270,13 +285,9 @@ void Tema::Update(float deltaTimeSeconds)
 {
     //GetSceneCamera()->SetPosition(playerPos + cameraOffset);
     //GetSceneCamera()->SetRotation(glm::angleAxis(RADIANS(-30.0f), glm::vec3(1, 0, 0)));
-
-    // Set camera position to follow player
-    auto camera = GetSceneCamera();
-    camera->SetPositionAndRotation(
-        playerPos + cameraOffset,
-        glm::quatLookAt(-glm::normalize(cameraOffset), glm::vec3(0, 1, 0))
-    );
+    
+    std::cout << "Position: " << glm::to_string(spot_positions[spot_count - 1]) << std::endl;
+    std::cout << "Direction: " << glm::to_string(spot_directions[spot_count - 1]) << std::endl;
 
 
     // Update the rotation timer
@@ -288,7 +299,7 @@ void Tema::Update(float deltaTimeSeconds)
         timeSinceLastRotation = 0.0f;
 
         // Generate random rotations for each spotlight
-        for (int i = 0; i < spot_count - 1; i++)
+        for (int i = 0; i < spot_count - 2; i++)
         {
             float angle_x = glm::linearRand(0.0f, spot_rotation_max_cap); // Random rotation around X axis
             float angle_z = glm::linearRand(0.0f, spot_rotation_max_cap); // Random rotation around Z axis
@@ -298,7 +309,7 @@ void Tema::Update(float deltaTimeSeconds)
     }
     else
     {
-        for (int i = 0; i < spot_count - 1; i++)
+        for (int i = 0; i < spot_count - 2; i++)
         {
             // Apply rotations
             glm::mat4 rotation = glm::rotate(glm::mat4(1), glm::radians(spot_rotations[i].x * deltaTimeSeconds * spot_rotation_speed), glm::vec3(1, 0, 0))
@@ -307,14 +318,94 @@ void Tema::Update(float deltaTimeSeconds)
             // Update spot light direction
             spot_directions[i] = glm::mat3(rotation) * spot_directions[i];
         }
-
-        // Rotate spotlights
-        //float rotationSpeed = 30.0f;  // Adjust this value as needed
-        //glm::mat4 rotation = glm::rotate(glm::mat4(1), glm::radians(rotationSpeed * deltaTimeSeconds), glm::vec3(1, 0, 0));
-        //spot_directions[i] = glm::mat3(rotation) * spot_directions[i];
     }
 
+    if (duoModeEnabled)
+    {
+        // Set camera position to follow player
+        auto camera = GetSceneCamera();
+        camera->SetPositionAndRotation(
+            playerPos + cameraOffset,
+            glm::quatLookAt(-glm::normalize(cameraOffset), glm::vec3(0, 1, 0))
+        );
 
+        glm::ivec2 resolution = window->GetResolution();
+        viewport_space = transform2D::ViewportSpace(0, 0, resolution.x * 0.5f, resolution.y);
+        DrawScene(camera, viewport_space, deltaTimeSeconds);
+
+
+        static auto secondCamera = new gfxc::Camera();
+        secondCamera->SetPositionAndRotation(
+            second_playerPos + cameraOffset,
+            glm::quatLookAt(-glm::normalize(cameraOffset), glm::vec3(0, 1, 0))
+        );
+
+        viewport_space = transform2D::ViewportSpace(resolution.x * 0.5f, 0, resolution.x * 0.5f, resolution.y);
+        DrawScene(secondCamera, viewport_space, deltaTimeSeconds);
+    }
+    else
+    {
+        // Set camera position to follow player
+        auto camera = GetSceneCamera();
+        camera->SetPositionAndRotation(
+            playerPos + cameraOffset,
+            glm::quatLookAt(-glm::normalize(cameraOffset), glm::vec3(0, 1, 0))
+        );
+        glm::ivec2 resolution = window->GetResolution();
+        viewport_space = transform2D::ViewportSpace(0, 0, resolution.x, resolution.y);
+        DrawScene(GetSceneCamera(), viewport_space, deltaTimeSeconds);
+    }
+    
+
+    
+}
+
+
+void Tema::Attack()
+{
+    // Get player forward vector based on Y rotation
+    glm::vec3 forwardVector = glm::vec3(glm::sin(glm::radians(playerRotY)), 0, glm::cos(glm::radians(playerRotY)));
+
+    glm::vec3 circleCenter = playerPos + attackRadius * glm::normalize(forwardVector);
+
+    glm::vec3 minBounds(-groundScale, 0.0f, -groundScale);
+    glm::vec3 maxBounds(groundScale, 5.0f, groundScale);
+
+    for (int i = 0; i < enemyCount; i++)
+    {
+        float distance = glm::length(enemies[i].GetPosition() - circleCenter);
+
+        if (distance <= attackRadius)
+        {
+            printf("Enemy detected\n");
+            float randomX = minBounds.x + static_cast<float>(rand()) / RAND_MAX * (maxBounds.x - minBounds.x);
+            float randomZ = minBounds.z + static_cast<float>(rand()) / RAND_MAX * (maxBounds.z - minBounds.z);
+            enemies[i].SetPosition(glm::vec3(randomX, 0, randomZ));
+        }
+    }
+}
+
+
+
+void Tema::DrawScene(gfxc::Camera* camera, const transform2D::ViewportSpace& viewport_space, float deltaTimeSeconds)
+{
+    glm::mat4 view = transform3D::View(
+        camera->m_transform->GetWorldPosition(),
+        camera->m_transform->GetLocalOZVector(),
+        camera->m_transform->GetLocalOXVector(),
+        camera->m_transform->GetLocalOYVector()
+    );
+
+    glm::mat4 projection = transform3D::Perspective(
+        glm::radians(60.0f), (float)viewport_space.width / viewport_space.height, 0.1f, 100.0f
+    );
+
+
+    // TODO(student): Set the position and size of the view port based on the
+    // information received from the 'viewport_space' parameter.
+    glViewport(viewport_space.x, viewport_space.y, viewport_space.width, viewport_space.height);
+
+    
     // Render ground
     {
         glm::mat4 model = glm::mat4(1);
@@ -393,7 +484,94 @@ void Tema::Update(float deltaTimeSeconds)
 
         // Spot Light
         {
-            spot_positions[spot_count - 1] = playerPos + glm::vec3(0, 3.0f, 0);
+            spot_positions[spot_count - 2] = playerPos + glm::vec3(0, 3.0f, 0);
+            glm::mat4 model = glm::mat4(1);
+            model = glm::translate(model, spot_positions[spot_count - 2]);
+            model = glm::scale(model, glm::vec3(0.1f));
+            // RenderMesh(meshes["sphere"], shaders["Simple"], model);
+        }
+
+        // Point Light
+        {
+            point_light_positions[8] = playerPos + glm::vec3(0, 2.5f, 1);
+            glm::mat4 model = glm::mat4(1);
+            model = glm::translate(model, point_light_positions[8]);
+            model = glm::scale(model, glm::vec3(5.1f));
+            // RenderMesh(meshes["sphere"], shaders["Simple"], model);
+        }
+    }
+
+    // Render Second Player Model
+    if (duoModeEnabled)
+    {
+        // Body
+        {
+            glm::mat4 model = glm::mat4(1);
+            model = glm::translate(model, second_playerPos); // translate limb to player's current pos
+            model = glm::rotate(model, RADIANS(second_playerRotY), glm::vec3(0, 1, 0)); // player rotation
+            model = glm::translate(model, glm::vec3(0, 1.55f, 0)); // translate limb relative to player's body
+            model = glm::scale(model, glm::vec3(0.5f, 1.0f, 0.25f));
+            RenderSimpleMesh(meshes["cube"], shaders["SimpleShader"], model, second_player_color);
+        }
+
+        // Head
+        {
+            glm::mat4 model = glm::mat4(1);
+            model = glm::translate(model, second_playerPos); // translate limb to player's current pos
+            model = glm::rotate(model, RADIANS(second_playerRotY), glm::vec3(0, 1, 0)); // player rotation
+            model = glm::translate(model, glm::vec3(0, 2.2f, 0)); // translate limb relative to player's body
+            model = glm::scale(model, glm::vec3(0.2f, 0.2f, 0.2f));
+            RenderSimpleMesh(meshes["cube"], shaders["SimpleShader"], model, second_player_color);
+        }
+
+        // Right Arm
+        {
+            glm::mat4 model = glm::mat4(1);
+            model = glm::translate(model, second_playerPos); // translate limb to player's current pos
+            model = glm::rotate(model, RADIANS(second_playerRotY), glm::vec3(0, 1, 0)); // player rotation
+            model = glm::translate(model, glm::vec3(0.4f, 2.05f, 0)); // translate limb relative to player's body
+            model = glm::rotate(model, RADIANS(second_limbRotation1), glm::vec3(1, 0, 0)); // rotate limb to desired angle
+            model = glm::scale(model, glm::vec3(0.2f, 1.0f, 0.2f)); // scale limb to desired ratio
+            model = glm::translate(model, glm::vec3(0, -0.5f, 0)); // translate limb so rotation pivot is correct
+            RenderSimpleMesh(meshes["cube"], shaders["SimpleShader"], model, second_player_color);
+        }
+        // Left Arm
+        {
+            glm::mat4 model = glm::mat4(1);
+            model = glm::translate(model, second_playerPos); // translate limb to player's current pos
+            model = glm::rotate(model, RADIANS(second_playerRotY), glm::vec3(0, 1, 0)); // player rotation
+            model = glm::translate(model, glm::vec3(-0.4f, 2.05f, 0)); // translate limb relative to player's body
+            model = glm::rotate(model, RADIANS(second_limbRotation2), glm::vec3(1, 0, 0)); // rotate limb to desired angle
+            model = glm::scale(model, glm::vec3(0.2f, 1.0f, 0.2f)); // scale limb to desired ratio
+            model = glm::translate(model, glm::vec3(0, -0.5f, 0)); // translate limb so rotation pivot is correct
+            RenderSimpleMesh(meshes["cube"], shaders["SimpleShader"], model, second_player_color);
+        }
+
+        // Right Leg
+        {
+            glm::mat4 model = glm::mat4(1);
+            model = glm::translate(model, second_playerPos); // translate limb to player's current pos
+            model = glm::rotate(model, RADIANS(second_playerRotY), glm::vec3(0, 1, 0)); // player rotation
+            model = glm::translate(model, glm::vec3(0.15f, 1.0f, 0)); // translate limb relative to player's body
+            model = glm::rotate(model, RADIANS(second_limbRotation2), glm::vec3(1, 0, 0)); // rotate limb to desired angle
+            model = glm::scale(model, glm::vec3(0.2f, 1.0f, 0.2f)); // scale limb to desired ratio
+            model = glm::translate(model, glm::vec3(0, -0.5f, 0)); // translate limb so rotation pivot is correct
+            RenderSimpleMesh(meshes["cube"], shaders["SimpleShader"], model, second_player_color);
+        }
+        // Left Leg
+        {
+            glm::mat4 model = glm::mat4(1);
+            model = glm::translate(model, second_playerPos); // translate limb to player's current pos
+            model = glm::rotate(model, RADIANS(second_playerRotY), glm::vec3(0, 1, 0)); // player rotation
+            model = glm::translate(model, glm::vec3(-0.15f, 1.0f, 0)); // translate limb relative to player's body
+            model = glm::rotate(model, RADIANS(second_limbRotation1), glm::vec3(1, 0, 0)); // rotate limb to desired angle
+            model = glm::scale(model, glm::vec3(0.2f, 1.0f, 0.2f)); // scale limb to desired ratio
+            model = glm::translate(model, glm::vec3(0, -0.5f, 0)); // translate limb so rotation pivot is correct
+            RenderSimpleMesh(meshes["cube"], shaders["SimpleShader"], model, second_player_color);
+        }
+        // Spot Light
+        {
+            spot_positions[spot_count - 1] = second_playerPos + glm::vec3(0, 3.0f, 0);
             glm::mat4 model = glm::mat4(1);
             model = glm::translate(model, spot_positions[spot_count - 1]);
             model = glm::scale(model, glm::vec3(0.1f));
@@ -402,12 +580,14 @@ void Tema::Update(float deltaTimeSeconds)
 
         // Point Light
         {
-            point_light_positions[9] = playerPos + glm::vec3(0, 2.5f, 1);
+            point_light_positions[9] = second_playerPos + glm::vec3(0, 2.5f, 1);
             glm::mat4 model = glm::mat4(1);
             model = glm::translate(model, point_light_positions[9]);
             model = glm::scale(model, glm::vec3(5.1f));
             // RenderMesh(meshes["sphere"], shaders["Simple"], model);
         }
+
+        
     }
 
     // Render light posts and spot lights
@@ -433,12 +613,14 @@ void Tema::Update(float deltaTimeSeconds)
         model = glm::mat4(1);
         model = glm::translate(model, spot_positions[i * 2]);
         model = glm::scale(model, glm::vec3(0.1f));
-        RenderMesh(meshes["sphere"], shaders["Simple"], model);
+        // RenderMesh(meshes["sphere"], shaders["Simple"], model);
+        RenderSimpleMesh(meshes["sphere"], shaders["SimpleShader"], model, glm::vec3(1, 1, 1));
 
         model = glm::mat4(1);
         model = glm::translate(model, spot_positions[i * 2 + 1]);
         model = glm::scale(model, glm::vec3(0.1f));
-        RenderMesh(meshes["sphere"], shaders["Simple"], model);
+        // RenderMesh(meshes["sphere"], shaders["Simple"], model);
+        RenderSimpleMesh(meshes["sphere"], shaders["SimpleShader"], model, glm::vec3(1, 1, 1));
     }
 
     // Enemies
@@ -520,74 +702,13 @@ void Tema::Update(float deltaTimeSeconds)
             }
         }
     }
-
-
-    // Set up and render lights from lab 6
-    /*
-    * for (int i = 0; i < spot_count; i++)
-    {
-        glm::mat4 rotation = glm::rotate(glm::mat4(1), glm::radians(50 * deltaTimeSeconds), glm::vec3(1, 0, 0));
-        spot_directions[i] = glm::mat3(rotation) * spot_directions[i];
-    }
-
-         angle += glm::radians(6.0f) * deltaTimeSeconds;
-        for (int i = 0; i < 9; i++) {
-            glm::mat4 rotation = glm::rotate(glm::mat4(1.0), angle + i * glm::radians(360.0f) / 9, glm::vec3(0, 1, 0));
-
-            point_light_positions[i] = glm::vec3(glm::mat3(rotation) * glm::vec3(5, 1.5 + sin(Engine::GetElapsedTime() + i / 2.0f), 0));
-            spot_light_positions[i] = glm::vec3(glm::mat3(rotation) * glm::vec3(3, 1.5 + sin(Engine::GetElapsedTime() + i / 2.0f), 0));
-        }
-
-        // Render the point lights in the scene
-        for (int i = 0; i < 9; i++)
-        {
-            glm::mat4 model = glm::mat4(1);
-            model = glm::translate(model, point_light_positions[i]);
-            model = glm::scale(model, glm::vec3(0.1f));
-            RenderMesh(meshes["sphere"], shaders["Simple"], model);
-        }
-
-        // Render the spot lights in the scene
-        for (int i = 0; i < 10; i++)
-        {
-            glm::mat4 model = glm::mat4(1);
-            model = glm::translate(model, spot_light_positions[i]);
-            model = glm::scale(model, glm::vec3(0.1f));
-            RenderMesh(meshes["sphere"], shaders["Simple"], model);
-        }
-    */
-}
-
-
-void Tema::Attack()
-{
-    // Get player forward vector based on Y rotation
-    glm::vec3 forwardVector = glm::vec3(glm::sin(glm::radians(playerRotY)), 0, glm::cos(glm::radians(playerRotY)));
-
-    glm::vec3 circleCenter = playerPos + attackRadius * glm::normalize(forwardVector);
-
-    glm::vec3 minBounds(-groundScale, 0.0f, -groundScale);
-    glm::vec3 maxBounds(groundScale, 5.0f, groundScale);
-
-    for (int i = 0; i < enemyCount; i++)
-    {
-        float distance = glm::length(enemies[i].GetPosition() - circleCenter);
-
-        if (distance <= attackRadius)
-        {
-            printf("Enemy detected\n");
-            float randomX = minBounds.x + static_cast<float>(rand()) / RAND_MAX * (maxBounds.x - minBounds.x);
-            float randomZ = minBounds.z + static_cast<float>(rand()) / RAND_MAX * (maxBounds.z - minBounds.z);
-            enemies[i].SetPosition(glm::vec3(randomX, 0, randomZ));
-        }
-    }
 }
 
 
 
 void Tema::FrameEnd()
 {
-    DrawCoordinateSystem();
+    // DrawCoordinateSystem();
 }
 
 void Tema::RenderSimpleMesh(Mesh* mesh, Shader* shader, const glm::mat4& model, const glm::vec3& object_color)
@@ -641,12 +762,23 @@ void Tema::RenderSimpleMesh(Mesh* mesh, Shader* shader, const glm::mat4& model, 
     int eye_position_location = glGetUniformLocation(shader->program, "eye_position");
     glUniform3fv(eye_position_location, 1, glm::value_ptr(eye_position));
 
-
     int playerPos_location = glGetUniformLocation(shader->program, "playerPos");
     glUniform3fv(playerPos_location, 1, glm::value_ptr(playerPos));
 
+    playerModelMat = glm::mat4(1);
+    playerModelMat = glm::translate(playerModelMat, playerPos); // Player model matrix for shader when creating curvature
+    // playerModelMat = glm::rotate(playerModelMat, RADIANS(playerRotY), glm::vec3(0, 1, 0)); // player rotation
+    GLint loc_playerModelMat = glGetUniformLocation(shader->program, "playerModelMat");
+    glUniformMatrix4fv(loc_playerModelMat, 1, GL_FALSE, glm::value_ptr(playerModelMat));
+
     int curveFactor_location = glGetUniformLocation(shader->program, "curveFactor");
     glUniform1f(curveFactor_location, curveFactor);
+
+
+
+    // std::cout << glm::to_string(playerModelMat) << std::endl;
+
+
 
 
     glm::vec3 material_ka = object_color;
@@ -757,67 +889,6 @@ Mesh* Tema::CreateMesh(const char* name, const std::vector<VertexFormat>& vertic
 
 void Tema::OnInputUpdate(float deltaTime, int mods)
 {
-    if (!window->MouseHold(GLFW_MOUSE_BUTTON_RIGHT))
-    {
-        const float speed = 2;
-
-        glm::vec3 up = glm::vec3(0, 1, 0);
-        glm::vec3 right = GetSceneCamera()->m_transform->GetLocalOXVector();
-        glm::vec3 forward = GetSceneCamera()->m_transform->GetLocalOZVector();
-        forward = glm::normalize(glm::vec3(forward.x, 0, forward.z));
-
-        glm::vec3* light_position = nullptr;
-
-        if (controlled_light_source_index == 0) {
-            light_position = &point_light_positions[9];
-        }
-
-        if (controlled_light_source_index == 1) {
-            light_position = &spot_light_positions[9];
-        }
-
-        // Control light position using on W, A, S, D, E, Q
-        if (window->KeyHold(GLFW_KEY_W)) (*light_position) -= forward * deltaTime * speed;
-        if (window->KeyHold(GLFW_KEY_A)) (*light_position) -= right * deltaTime * speed;
-        if (window->KeyHold(GLFW_KEY_S)) (*light_position) += forward * deltaTime * speed;
-        if (window->KeyHold(GLFW_KEY_D)) (*light_position) += right * deltaTime * speed;
-        if (window->KeyHold(GLFW_KEY_E)) (*light_position) += up * deltaTime * speed;
-        if (window->KeyHold(GLFW_KEY_Q)) (*light_position) -= up * deltaTime * speed;
-    }
-
-    {
-        glm::vec3& light_direction = spot_light_directions[9];
-        float& angle = spot_light_angles[9];
-        // TODO(student): Change the lighting direction and angle of the spot
-        // light source from the keyboard. From the keys, implement the possibility
-        // of rotating the lighting direction relative to the OX and OZ axes, in both
-        // directions and the possibility of increasing and decreasing the angle.
-
-        if (window->KeyHold(GLFW_KEY_UP)) {
-            glm::mat4 rotation = glm::rotate(glm::mat4(1), glm::radians(50 * deltaTime), glm::vec3(1, 0, 0));
-            light_direction = glm::mat3(rotation) * light_direction;
-        }
-        if (window->KeyHold(GLFW_KEY_DOWN)) {
-            glm::mat4 rotation = glm::rotate(glm::mat4(1), glm::radians(-50 * deltaTime), glm::vec3(1, 0, 0));
-            light_direction = glm::mat3(rotation) * light_direction;
-        }
-        if (window->KeyHold(GLFW_KEY_LEFT)) {
-            glm::mat4 rotation = glm::rotate(glm::mat4(1), glm::radians(-50 * deltaTime), glm::vec3(0, 0, 1));
-            light_direction = glm::mat3(rotation) * light_direction;
-        }
-        if (window->KeyHold(GLFW_KEY_RIGHT)) {
-            glm::mat4 rotation = glm::rotate(glm::mat4(1), glm::radians(50 * deltaTime), glm::vec3(0, 0, 1));
-            light_direction = glm::mat3(rotation) * light_direction;
-        }
-
-        if (window->KeyHold(GLFW_KEY_Z)) {
-            angle -= deltaTime;
-        }
-        if (window->KeyHold(GLFW_KEY_X)) {
-            angle += deltaTime;
-        }
-    }
-
     // Player Movement Input
     {
         glm::vec3 movement(0.0f, 0.0f, 0.0f);
@@ -844,49 +915,49 @@ void Tema::OnInputUpdate(float deltaTime, int mods)
         if (movement.x == 0 && movement.z < 0)
         {
             playerRotY = 180.0f;
-            spot_directions[spot_count - 1] = glm::vec3(0, 0, -1);
+            spot_directions[spot_count - 2] = glm::vec3(0, 0, -1);
         }
         // Forward-left
         if (movement.x < 0 && movement.z < 0)
         {
             playerRotY = 180.0f + 45.0f;
-            spot_directions[spot_count - 1] = glm::vec3(-1, 0, -1);
+            spot_directions[spot_count - 2] = glm::vec3(-1, 0, -1);
         }
         // Forward-right
         if (movement.x > 0 && movement.z < 0)
         {
             playerRotY = 180.0f - 45.0f;
-            spot_directions[spot_count - 1] = glm::vec3(1, 0, -1);
+            spot_directions[spot_count - 2] = glm::vec3(1, 0, -1);
         }
         // Left
         if (movement.x < 0 && movement.z == 0)
         {
             playerRotY = -90.0f;
-            spot_directions[spot_count - 1] = glm::vec3(-1, 0, 0);
+            spot_directions[spot_count - 2] = glm::vec3(-1, 0, 0);
         }
         // Right
         if (movement.x > 0 && movement.z == 0)
         {
             playerRotY = 90.0f;
-            spot_directions[spot_count - 1] = glm::vec3(1, 0, 0);
+            spot_directions[spot_count - 2] = glm::vec3(1, 0, 0);
         }
         // Back
         if (movement.x == 0 && movement.z > 0)
         {
             playerRotY = 0.0f;
-            spot_directions[spot_count - 1] = glm::vec3(0, 0, 1);
+            spot_directions[spot_count - 2] = glm::vec3(0, 0, 1);
         }
         // Back-left
         if (movement.x < 0 && movement.z > 0)
         {
             playerRotY = -45.0f;
-            spot_directions[spot_count - 1] = glm::vec3(-1, 0, 1);
+            spot_directions[spot_count - 2] = glm::vec3(-1, 0, 1);
         }
         // Back-right
         if (movement.x > 0 && movement.z > 0)
         {
             playerRotY = 45.0f;
-            spot_directions[spot_count - 1] = glm::vec3(1, 0, 1);
+            spot_directions[spot_count - 2] = glm::vec3(1, 0, 1);
         }
 
         // Normalize the movement vector
@@ -951,6 +1022,141 @@ void Tema::OnInputUpdate(float deltaTime, int mods)
         }
         
     }
+
+    // Second Player Movement Input
+    if(duoModeEnabled)
+    {
+        glm::vec3 movement(0.0f, 0.0f, 0.0f);
+
+        if (window->KeyHold(GLFW_KEY_LEFT))
+        {
+            movement.x -= 1.0f;
+        }
+        if (window->KeyHold(GLFW_KEY_RIGHT))
+        {
+            movement.x += 1.0f;
+        }
+        if (window->KeyHold(GLFW_KEY_DOWN))
+        {
+            movement.z += 1.0f;
+        }
+        if (window->KeyHold(GLFW_KEY_UP))
+        {
+            movement.z -= 1.0f;
+        }
+
+        // Determine player rotation based on movement
+        // Forward
+        if (movement.x == 0 && movement.z < 0)
+        {
+            second_playerRotY = 180.0f;
+            spot_directions[spot_count - 1] = glm::vec3(0, 0, -1);
+        }
+        // Forward-left
+        if (movement.x < 0 && movement.z < 0)
+        {
+            second_playerRotY = 180.0f + 45.0f;
+            spot_directions[spot_count - 1] = glm::vec3(-1, 0, -1);
+        }
+        // Forward-right
+        if (movement.x > 0 && movement.z < 0)
+        {
+            second_playerRotY = 180.0f - 45.0f;
+            spot_directions[spot_count - 1] = glm::vec3(1, 0, -1);
+        }
+        // Left
+        if (movement.x < 0 && movement.z == 0)
+        {
+            second_playerRotY = -90.0f;
+            spot_directions[spot_count - 1] = glm::vec3(-1, 0, 0);
+        }
+        // Right
+        if (movement.x > 0 && movement.z == 0)
+        {
+            second_playerRotY = 90.0f;
+            spot_directions[spot_count - 1] = glm::vec3(1, 0, 0);
+        }
+        // Back
+        if (movement.x == 0 && movement.z > 0)
+        {
+            second_playerRotY = 0.0f;
+            spot_directions[spot_count - 1] = glm::vec3(0, 0, 1);
+        }
+        // Back-left
+        if (movement.x < 0 && movement.z > 0)
+        {
+            second_playerRotY = -45.0f;
+            spot_directions[spot_count - 1] = glm::vec3(-1, 0, 1);
+        }
+        // Back-right
+        if (movement.x > 0 && movement.z > 0)
+        {
+            second_playerRotY = 45.0f;
+            spot_directions[spot_count - 1] = glm::vec3(1, 0, 1);
+        }
+
+        // Normalize the movement vector
+        if (glm::length(movement) > 0.0f)
+        {
+            movement = glm::normalize(movement);
+        }
+
+        if (movement != glm::vec3(0))
+        {
+            second_isMoving = true;
+
+            // Update player position
+            second_playerPos += movement * deltaTime * playerSpeed;
+
+            // Calculate limb rotation for walking animation
+            if (second_limbDirection1 == 0)
+            {
+                second_limbRotation1 += deltaTime * limbRotationSpeed;
+            }
+            else
+            {
+                second_limbRotation1 -= deltaTime * limbRotationSpeed;
+            }
+            if (second_limbDirection2 == 0)
+            {
+                second_limbRotation2 += deltaTime * limbRotationSpeed;
+            }
+            else
+            {
+                second_limbRotation2 -= deltaTime * limbRotationSpeed;
+            }
+
+            if (second_limbRotation1 >= limbMaxRotation)
+            {
+                second_limbDirection1 = 1;
+            }
+            if (second_limbRotation1 <= limbMinRotation)
+            {
+                second_limbDirection1 = 0;
+            }
+            if (second_limbRotation2 >= limbMaxRotation)
+            {
+                second_limbDirection2 = 1;
+            }
+            if (second_limbRotation2 <= limbMinRotation)
+            {
+                second_limbDirection2 = 0;
+            }
+        }
+        else
+        {
+            second_isMoving = false;
+
+            // Calculate limb rotation for idle player
+            const float resetSpeed = 5.0f;
+            if (second_limbRotation1 != 0 && second_limbRotation2 != 0)
+            {
+                second_limbRotation1 = glm::mix(second_limbRotation1, 0.0f, deltaTime * resetSpeed);
+                second_limbRotation2 = glm::mix(second_limbRotation2, 0.0f, deltaTime * resetSpeed);
+            }
+        }
+
+    }
 }
 
 
@@ -965,8 +1171,23 @@ void Tema::OnKeyPress(int key, int mods)
     {
         Attack();
     }
+
+    if (key == GLFW_KEY_P)
+    {
+        if (!duoModeEnabled)
+        {
+            duoModeEnabled = true;
+            EnableDuoMode();
+        }
+    }
 }
 
+void Tema::EnableDuoMode()
+{
+
+
+    
+}
 
 void Tema::OnKeyRelease(int key, int mods)
 {

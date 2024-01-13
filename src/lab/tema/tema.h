@@ -4,6 +4,8 @@
 #include "components/transform.h"
 #include "lab/tema/enemy.h"
 
+#include "lab/lab2/transform2D.h"
+
 
 namespace lab
 {
@@ -62,6 +64,7 @@ namespace lab
         glm::vec3 cameraOffset;
         float curveFactor;
 
+        glm::mat4 playerModelMat; // player model matrix used for curvature
 
         int groundScale;
         int lightpost_count;
@@ -90,6 +93,20 @@ namespace lab
         int enemyCount;
         Enemy *enemies;
 
+
+
+        bool duoModeEnabled;
+        transform2D::ViewportSpace viewport_space;
+        glm::vec3 second_playerPos;
+        float second_playerRotY;
+        float second_limbRotation1; // right arm, left leg
+        float second_limbRotation2; // left arm, right leg
+        int second_limbDirection1; // right arm, left leg, 0 = positive rotation, 1 = negative rotation
+        int second_limbDirection2; // left arm, right leg, 0 = positive rotation, 1 = negative rotation
+        bool second_isMoving;
+        glm::mat4 second_playerModelMat; // player model matrix used for curvature
+        glm::vec3 second_player_color;
+
         
 
         // =====================================================================================================================
@@ -101,6 +118,8 @@ namespace lab
         Mesh* CreateMesh(const char* name, const std::vector<VertexFormat>& vertices, const std::vector<unsigned int>& indices);
         void LoadShader(const std::string& name);
         void Attack();
+        void EnableDuoMode();
+        void DrawScene(gfxc::Camera* camera, const transform2D::ViewportSpace& viewport_space, float deltaTimeSeconds);
         // =====================================================================================================================
     };
 }   // namespace lab
