@@ -818,18 +818,32 @@ void Tema::RenderSimpleMesh(Mesh* mesh, Shader* shader, const glm::mat4& model, 
     {
         eye_position = secondCamera->m_transform->GetWorldPosition();
     }
-
-    
-
     // TODO(student): Set eye position (camera position) uniform
     int eye_position_location = glGetUniformLocation(shader->program, "eye_position");
     glUniform3fv(eye_position_location, 1, glm::value_ptr(eye_position));
 
+
     int playerPos_location = glGetUniformLocation(shader->program, "playerPos");
-    glUniform3fv(playerPos_location, 1, glm::value_ptr(playerPos));
+    if (useMainCamera)
+    {
+        glUniform3fv(playerPos_location, 1, glm::value_ptr(playerPos));
+    }
+    else
+    {
+        glUniform3fv(playerPos_location, 1, glm::value_ptr(second_playerPos));
+    }
+    
 
     playerModelMat = glm::mat4(1);
-    playerModelMat = glm::translate(playerModelMat, playerPos); // Player model matrix for shader when creating curvature
+    if (useMainCamera)
+    {
+        playerModelMat = glm::translate(playerModelMat, playerPos); // Player model matrix for shader when creating curvature
+    }
+    else
+    {
+        playerModelMat = glm::translate(playerModelMat, second_playerPos); // Player model matrix for shader when creating curvature
+    }
+    
     // playerModelMat = glm::rotate(playerModelMat, RADIANS(playerRotY), glm::vec3(0, 1, 0)); // player rotation
     GLint loc_playerModelMat = glGetUniformLocation(shader->program, "playerModelMat");
     glUniformMatrix4fv(loc_playerModelMat, 1, GL_FALSE, glm::value_ptr(playerModelMat));
