@@ -23,7 +23,6 @@ using namespace lab;
 Tema::Tema()
 {
     controlled_light_source_index = 0;
-
     angle = 0;
 }
 
@@ -54,7 +53,7 @@ void Tema::Init()
         CreateMesh("ground", vertices, indices);
     }
 
-    // Create a mesh box using custom data
+    // Create a cube mesh using custom data
     {
         vector<VertexFormat> vertices
         {
@@ -163,7 +162,7 @@ void Tema::Init()
     limbRotationSpeed = 200.0f;
     isMoving = false;
     cameraOffset = glm::vec3(0, 10, 10);
-    curveFactor = 0.02f;
+    curveFactor = 0.007f;
 
     timeSinceLastRotation = 0.0f;
     timeBetweenRotations = 1.0f;
@@ -183,7 +182,7 @@ void Tema::Init()
 
     secondCamera = new gfxc::Camera();
 
-    // Second player init
+    // Second player
     second_player_color = glm::vec3(1, 1, 0);
     second_playerRotY = 0.0f;
     second_playerPos = glm::vec3(0, 0, 0);
@@ -283,15 +282,7 @@ void Tema::FrameStart()
 
 void Tema::Update(float deltaTimeSeconds)
 {
-    //GetSceneCamera()->SetPosition(playerPos + cameraOffset);
-    //GetSceneCamera()->SetRotation(glm::angleAxis(RADIANS(-30.0f), glm::vec3(1, 0, 0)));
-    
-    //std::cout << "Position: " << glm::to_string(spot_positions[spot_count - 1]) << std::endl;
-    //std::cout << "Direction: " << glm::to_string(spot_directions[spot_count - 1]) << std::endl;
-
-
     // Spotlights rotation
-
     // Update the rotation timer
     timeSinceLastRotation += deltaTimeSeconds;
 
@@ -379,9 +370,6 @@ void Tema::Update(float deltaTimeSeconds)
         viewport_space = transform2D::ViewportSpace(0, 0, resolution.x, resolution.y);
         DrawScene(GetSceneCamera(), viewport_space, deltaTimeSeconds);
     }
-    
-
-    
 }
 
 
@@ -403,7 +391,7 @@ void Tema::Attack(bool mainPlayer)
 
             if (distance <= attackRadius)
             {
-                printf("Enemy detected\n");
+                // printf("Enemy detected\n");
                 float randomX = minBounds.x + static_cast<float>(rand()) / RAND_MAX * (maxBounds.x - minBounds.x);
                 float randomZ = minBounds.z + static_cast<float>(rand()) / RAND_MAX * (maxBounds.z - minBounds.z);
                 enemies[i].SetPosition(glm::vec3(randomX, 0, randomZ));
@@ -426,14 +414,13 @@ void Tema::Attack(bool mainPlayer)
 
             if (distance <= attackRadius)
             {
-                printf("Enemy detected\n");
+                // printf("Enemy detected\n");
                 float randomX = minBounds.x + static_cast<float>(rand()) / RAND_MAX * (maxBounds.x - minBounds.x);
                 float randomZ = minBounds.z + static_cast<float>(rand()) / RAND_MAX * (maxBounds.z - minBounds.z);
                 enemies[i].SetPosition(glm::vec3(randomX, 0, randomZ));
             }
         }
     }
-    
 }
 
 
@@ -452,7 +439,7 @@ void Tema::DrawScene(gfxc::Camera* camera, const transform2D::ViewportSpace& vie
     );
 
 
-    // TODO(student): Set the position and size of the view port based on the
+    // Set the position and size of the view port based on the
     // information received from the 'viewport_space' parameter.
     glViewport(viewport_space.x, viewport_space.y, viewport_space.width, viewport_space.height);
 
@@ -774,12 +761,7 @@ void Tema::RenderSimpleMesh(Mesh* mesh, Shader* shader, const glm::mat4& model, 
 
     // Send shader uniforms for light & material properties
 
-    // TODO(student): Send the information about the light sources
-    // (positions of the point light sources, colors of the point light
-    // sources, positions of the spot light sources, colors of the spot light
-    // sources, directions of the spot light sources and angles for the
-    // spot light sources) in attributes of uniform type. Use the attributes
-    // defined in "lab6.h". Send 10 entities of each.
+    // Send the information about the light sources (lab 6)
     int location = 0;
     location = glGetUniformLocation(shader->program, "point_light_positions");
     glUniform3fv(location, 10, glm::value_ptr(point_light_positions[0]));
@@ -787,7 +769,6 @@ void Tema::RenderSimpleMesh(Mesh* mesh, Shader* shader, const glm::mat4& model, 
     glUniform3fv(location, 10, glm::value_ptr(spot_light_positions[0]));
     location = glGetUniformLocation(shader->program, "spot_light_directions");
     glUniform3fv(location, 10, glm::value_ptr(spot_light_directions[0]));
-
     location = glGetUniformLocation(shader->program, "point_light_colors");
     glUniform3fv(location, 10, glm::value_ptr(point_light_colors[0]));
     location = glGetUniformLocation(shader->program, "spot_light_colors");
@@ -808,8 +789,8 @@ void Tema::RenderSimpleMesh(Mesh* mesh, Shader* shader, const glm::mat4& model, 
     location = glGetUniformLocation(shader->program, "spot_angles");
     glUniform1fv(location, spot_count, spot_angles);
 
+    // Send eye_position (camera position) based on selected camera
     glm::vec3 eye_position;
-
     if (useMainCamera)
     {
         eye_position = GetSceneCamera()->m_transform->GetWorldPosition();
@@ -818,10 +799,9 @@ void Tema::RenderSimpleMesh(Mesh* mesh, Shader* shader, const glm::mat4& model, 
     {
         eye_position = secondCamera->m_transform->GetWorldPosition();
     }
-    // TODO(student): Set eye position (camera position) uniform
+
     int eye_position_location = glGetUniformLocation(shader->program, "eye_position");
     glUniform3fv(eye_position_location, 1, glm::value_ptr(eye_position));
-
 
     int playerPos_location = glGetUniformLocation(shader->program, "playerPos");
     if (useMainCamera)
@@ -833,6 +813,7 @@ void Tema::RenderSimpleMesh(Mesh* mesh, Shader* shader, const glm::mat4& model, 
         glUniform3fv(playerPos_location, 1, glm::value_ptr(second_playerPos));
     }
     
+
 
     playerModelMat = glm::mat4(1);
     if (useMainCamera)
@@ -852,18 +833,12 @@ void Tema::RenderSimpleMesh(Mesh* mesh, Shader* shader, const glm::mat4& model, 
     glUniform1f(curveFactor_location, curveFactor);
 
 
-
-    // std::cout << glm::to_string(playerModelMat) << std::endl;
-
-
-
-
     glm::vec3 material_ka = object_color;
     glm::vec3 material_kd = object_color;
     glm::vec3 material_ks = object_color;
     int material_shininess = 30;
 
-    // TODO(student): Set material property uniforms (shininess, ka, kd, ks)
+    // Set material property uniforms (shininess, ka, kd, ks)
     location = glGetUniformLocation(shader->program, "material_ka");
     glUniform3fv(location, 1, glm::value_ptr(material_ka));
     location = glGetUniformLocation(shader->program, "material_kd");
@@ -915,16 +890,6 @@ Mesh* Tema::CreateMesh(const char* name, const std::vector<VertexFormat>& vertic
     // Send indices data into the IBO buffer
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices[0]) * indices.size(), &indices[0], GL_STATIC_DRAW);
 
-    // ========================================================================
-    // This section demonstrates how the GPU vertex shader program
-    // receives data.
-
-    // To get an idea about how they're different from one another, do the
-    // following experiments. What happens if you switch the color pipe and
-    // normal pipe in this function (but not in the shader)? Now, what happens
-    // if you do the same thing in the shader (but not in this function)?
-    // Finally, what happens if you do the same thing in both places? Why?
-
     // Set vertex position attribute
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(VertexFormat), 0);
@@ -940,7 +905,6 @@ Mesh* Tema::CreateMesh(const char* name, const std::vector<VertexFormat>& vertic
     // Set vertex color attribute
     glEnableVertexAttribArray(3);
     glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(VertexFormat), (void*)(2 * sizeof(glm::vec3) + sizeof(glm::vec2)));
-    // ========================================================================
 
     // Unbind the VAO
     glBindVertexArray(0);
@@ -955,6 +919,8 @@ Mesh* Tema::CreateMesh(const char* name, const std::vector<VertexFormat>& vertic
     meshes[name]->indices = indices;
     return meshes[name];
 }
+
+
 
 /*
  *  These are callback functions. To find more about callbacks and
@@ -1095,7 +1061,6 @@ void Tema::OnInputUpdate(float deltaTime, int mods)
                 limbRotation2 = glm::mix(limbRotation2, 0.0f, deltaTime * resetSpeed);
             }
         }
-        
     }
 
     // Second Player Movement Input
@@ -1230,7 +1195,6 @@ void Tema::OnInputUpdate(float deltaTime, int mods)
                 second_limbRotation2 = glm::mix(second_limbRotation2, 0.0f, deltaTime * resetSpeed);
             }
         }
-
     }
 }
 
@@ -1258,17 +1222,10 @@ void Tema::OnKeyPress(int key, int mods)
         if (!duoModeEnabled)
         {
             duoModeEnabled = true;
-            EnableDuoMode();
         }
     }
 }
 
-void Tema::EnableDuoMode()
-{
-
-
-    
-}
 
 void Tema::OnKeyRelease(int key, int mods)
 {

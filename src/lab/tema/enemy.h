@@ -28,6 +28,7 @@ namespace lab
         // Setters
         void SetPosition(glm::vec3 newPos);
 
+
         void Follow(glm::vec3 target, float deltaTime);
         void Animate(float deltaTime);
 
@@ -46,8 +47,5 @@ namespace lab
          int limbDirection2; // left arm, right leg, 0 = positive rotation, 1 = negative rotation
          float limbRotationSpeed;
 
-
-         
-       
     };
 }   // namespace lab

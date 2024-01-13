@@ -11,12 +11,6 @@ using namespace std;
 using namespace lab;
 
 
-/*
- *  To find out more about `FrameStart`, `Update`, `FrameEnd`
- *  and the order in which they are called, see `world.cpp`.
- */
-
-
 Enemy::Enemy(glm::vec3 position, glm::vec3 color)
 {
 	this->position = position;
@@ -95,8 +89,8 @@ float Enemy::GetSpeed()
     return this->speed;
 }
 
-// Setters
 
+// Setters
 void Enemy::SetPosition(glm::vec3 newPos)
 {
     this->position = newPos;

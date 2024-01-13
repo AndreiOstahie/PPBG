@@ -23,21 +23,17 @@ void main()
 
     world_position = (Model * vec4(v_position, 1)).xyz;
     world_normal = normalize( mat3(Model) * v_normal );
-
     vec3 world_playerPos = (playerModelMat * vec4(playerPos, 1)).xyz;
 
-    // Position after curvature effect
-    vec3 new_position = v_position;
-    new_position.y = v_position.y - pow(length(normalize(world_playerPos - world_position)), 2) * curveFactor;
+   // Position after curvature effect
+   // vec3 new_position = v_position;
+   // new_position.y = v_position.y - pow(length(normalize(world_playerPos - world_position)), 2) * curveFactor;
 
 
     gl_Position = Projection * View * Model * vec4(v_position, 1.0);
-    
 
 
-
-
-/* 
+/*
     world_position = (Model * vec4(v_position, 1)).xyz;
     world_normal = normalize(mat3(Model) * v_normal);
 

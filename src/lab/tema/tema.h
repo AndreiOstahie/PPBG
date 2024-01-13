@@ -34,7 +34,6 @@ namespace lab
 
 
         // Variables
-        
         glm::vec3 spot_light_positions[10];
         glm::vec3 spot_light_directions[10];
         glm::vec3 spot_light_colors[10];
@@ -43,11 +42,10 @@ namespace lab
         glm::vec3 point_light_positions[10];
         glm::vec3 point_light_colors[10];
         
-        
-
         int controlled_light_source_index;
         glm::vec3 controlled_light_position;
         float angle;
+
 
         // =====================================================================================================================
         glm::vec3 playerPos;
@@ -83,7 +81,6 @@ namespace lab
         float spot_rotation_speed;
         float spot_rotation_max_cap;
 
-
         glm::vec3 lightpost_color;
         glm::vec3 ground_color;
         glm::vec3 player_color;
@@ -92,8 +89,6 @@ namespace lab
 
         int enemyCount;
         Enemy *enemies;
-
-
 
         bool duoModeEnabled;
         transform2D::ViewportSpace viewport_space;
